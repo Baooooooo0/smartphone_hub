@@ -4,13 +4,17 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+<<<<<<< HEAD
 import 'firebase_options.dart';
+=======
+>>>>>>> 8dff0fc (feat: initialize project architecture with Riverpod, GoRouter, core utilities, and Firebase configuration)
 import 'core/theme/app_theme.dart';
 import 'router/app_router.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+<<<<<<< HEAD
   // ─── Firebase ──────────────────────────────────────────────
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
@@ -25,12 +29,19 @@ void main() async {
   };
 
   // ─── Chỉ cho phép Portrait mode ────────────────────────────
+=======
+  // Chỉ cho phép Portrait mode
+>>>>>>> 8dff0fc (feat: initialize project architecture with Riverpod, GoRouter, core utilities, and Firebase configuration)
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
 
+<<<<<<< HEAD
   // Status bar trong suốt
+=======
+  // Status bar style
+>>>>>>> 8dff0fc (feat: initialize project architecture with Riverpod, GoRouter, core utilities, and Firebase configuration)
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -38,6 +49,14 @@ void main() async {
     ),
   );
 
+<<<<<<< HEAD
+=======
+  // TODO (Task 1.1.2): Uncomment sau khi cấu hình Firebase
+  // await Firebase.initializeApp(
+  //   options: DefaultFirebaseOptions.currentPlatform,
+  // );
+
+>>>>>>> 8dff0fc (feat: initialize project architecture with Riverpod, GoRouter, core utilities, and Firebase configuration)
   runApp(
     const ProviderScope(
       child: SmartphoneHubApp(),

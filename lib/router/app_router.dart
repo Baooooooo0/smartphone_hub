@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -8,6 +9,12 @@ import '../presentation/auth/login/login_screen.dart';
 import '../presentation/auth/register/register_screen.dart';
 import '../presentation/auth/forgot_password/forgot_password_screen.dart';
 import '../presentation/home/home_screen.dart';
+=======
+import 'dart:async';
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+>>>>>>> 8dff0fc (feat: initialize project architecture with Riverpod, GoRouter, core utilities, and Firebase configuration)
 
 part 'app_router.g.dart';
 
@@ -49,6 +56,7 @@ abstract class AppRoutes {
   static const String adminReviews = '/admin/reviews';
 }
 
+<<<<<<< HEAD
 // ─── Router Notifier ──────────────────────────────────────────────────────────
 class RouterNotifier extends ChangeNotifier {
   final Ref _ref;
@@ -84,21 +92,50 @@ GoRouter appRouter(Ref ref) {
         path: AppRoutes.splash,
         name: 'splash',
         builder: (context, state) => const _SplashScreen(),
+=======
+// ─── Router Provider ──────────────────────────────────────────────────────────
+@riverpod
+GoRouter appRouter(Ref ref) {
+  return GoRouter(
+    initialLocation: AppRoutes.splash,
+    debugLogDiagnostics: true,
+    redirect: _redirect,
+    routes: [
+      // ── Splash / Auth ─────────────────────────────────────
+      GoRoute(
+        path: AppRoutes.splash,
+        name: 'splash',
+        builder: (context, state) => const _SplashPlaceholder(),
+>>>>>>> 8dff0fc (feat: initialize project architecture with Riverpod, GoRouter, core utilities, and Firebase configuration)
       ),
       GoRoute(
         path: AppRoutes.login,
         name: 'login',
+<<<<<<< HEAD
         builder: (context, state) => const LoginScreen(),
+=======
+        builder: (context, state) => const _Placeholder(label: 'Login Screen'),
+>>>>>>> 8dff0fc (feat: initialize project architecture with Riverpod, GoRouter, core utilities, and Firebase configuration)
       ),
       GoRoute(
         path: AppRoutes.register,
         name: 'register',
+<<<<<<< HEAD
         builder: (context, state) => const RegisterScreen(),
+=======
+        builder: (context, state) =>
+            const _Placeholder(label: 'Register Screen'),
+>>>>>>> 8dff0fc (feat: initialize project architecture with Riverpod, GoRouter, core utilities, and Firebase configuration)
       ),
       GoRoute(
         path: AppRoutes.forgotPassword,
         name: 'forgotPassword',
+<<<<<<< HEAD
         builder: (context, state) => const ForgotPasswordScreen(),
+=======
+        builder: (context, state) =>
+            const _Placeholder(label: 'Forgot Password Screen'),
+>>>>>>> 8dff0fc (feat: initialize project architecture with Riverpod, GoRouter, core utilities, and Firebase configuration)
       ),
 
       // ── Main Shell (Bottom Navigation) ───────────────────
@@ -108,7 +145,12 @@ GoRouter appRouter(Ref ref) {
           GoRoute(
             path: AppRoutes.home,
             name: 'home',
+<<<<<<< HEAD
             builder: (context, state) => const HomeScreen(),
+=======
+            builder: (context, state) =>
+                const _Placeholder(label: 'Home Screen'),
+>>>>>>> 8dff0fc (feat: initialize project architecture with Riverpod, GoRouter, core utilities, and Firebase configuration)
           ),
           GoRoute(
             path: AppRoutes.search,
@@ -295,6 +337,7 @@ GoRouter appRouter(Ref ref) {
   );
 }
 
+<<<<<<< HEAD
 // ─── Auth Redirect Guard ─────────────────────────────────────────────────────
 String? _redirect(
   BuildContext context,
@@ -323,6 +366,13 @@ String? _redirect(
   if (isLoggedIn && isAuthRoute) return AppRoutes.home;
   if (!isLoggedIn && !isAuthRoute) return AppRoutes.login;
 
+=======
+// ─── Redirect Guard ────────────────────────────────────────────────────────────
+// TODO (Sprint 1.2): Implement auth + admin role guard sau khi có AuthProvider
+String? _redirect(BuildContext context, GoRouterState state) {
+  // Placeholder: không redirect trong Sprint 1.1
+  // Sẽ implement sau khi có authStateProvider
+>>>>>>> 8dff0fc (feat: initialize project architecture with Riverpod, GoRouter, core utilities, and Firebase configuration)
   return null;
 }
 
@@ -394,9 +444,37 @@ class _MainShell extends StatelessWidget {
   }
 }
 
+<<<<<<< HEAD
 // ─── Splash Screen ──────────────────────────────────────────────────────────────
 class _SplashScreen extends StatelessWidget {
   const _SplashScreen();
+=======
+// ─── Splash Placeholder ───────────────────────────────────────────────────────
+class _SplashPlaceholder extends StatefulWidget {
+  const _SplashPlaceholder();
+
+  @override
+  State<_SplashPlaceholder> createState() => _SplashPlaceholderState();
+}
+
+class _SplashPlaceholderState extends State<_SplashPlaceholder> {
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    // TODO (Sprint 1.2): Check auth state → navigate accordingly
+    _timer = Timer(const Duration(seconds: 2), () {
+      if (mounted) context.go(AppRoutes.home);
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+>>>>>>> 8dff0fc (feat: initialize project architecture with Riverpod, GoRouter, core utilities, and Firebase configuration)
 
   @override
   Widget build(BuildContext context) {

@@ -48,4 +48,8 @@ final class AppRouterProvider
   }
 }
 
+<<<<<<< HEAD
 String _$appRouterHash() => r'5f6b017f6739c8e724a5919f1d1854c1814a30aa';
+=======
+String _$appRouterHash() => r'85e87847340b9758fcba1833a1ab35ac952425db';
+>>>>>>> 8dff0fc (feat: initialize project architecture with Riverpod, GoRouter, core utilities, and Firebase configuration)

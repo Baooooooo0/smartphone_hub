@@ -736,6 +736,7 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "8.2.0"
+<<<<<<< HEAD
   google_identity_services_web:
     dependency: transitive
     description:
@@ -784,6 +785,8 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.12.4+4"
+=======
+>>>>>>> 8dff0fc (feat: initialize project architecture with Riverpod, GoRouter, core utilities, and Firebase configuration)
   graphs:
     dependency: transitive
     description:
@@ -905,6 +908,7 @@ packages:
     source: hosted
     version: "1.0.5"
   jni:
+<<<<<<< HEAD
     dependency: "direct overridden"
     description:
       name: jni
@@ -920,6 +924,23 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.2"
+=======
+    dependency: transitive
+    description:
+      name: jni
+      sha256: ca1efa31ef27a0b8ecbb4f8dcf3785e5ad1b8a54c64af9b72d287ae81f93a4f4
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.1"
+  jni_flutter:
+    dependency: transitive
+    description:
+      name: jni_flutter
+      sha256: "8b59e590786050b1cd866677dddaf76b1ade5e7bc751abe04b86e84d379d3ba6"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.1"
+>>>>>>> 8dff0fc (feat: initialize project architecture with Riverpod, GoRouter, core utilities, and Firebase configuration)
   jni_util:
     dependency: transitive
     description:
