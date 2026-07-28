@@ -1,7 +1,13 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import '../domain/entities/user_entity.dart';
+import '../domain/usecases/auth/auth_usecases.dart';
+import '../presentation/auth/login/login_screen.dart';
+import '../presentation/auth/register/register_screen.dart';
+import '../presentation/auth/forgot_password/forgot_password_screen.dart';
 
 part 'app_router.g.dart';
 
@@ -46,33 +52,34 @@ abstract class AppRoutes {
 // ─── Router Provider ──────────────────────────────────────────────────────────
 @riverpod
 GoRouter appRouter(Ref ref) {
+  // Lắng nghe auth state để trigger redirect khi đăng nhập/đăng xuất
+  final authAsync = ref.watch(authStateProvider);
+
   return GoRouter(
     initialLocation: AppRoutes.splash,
     debugLogDiagnostics: true,
-    redirect: _redirect,
+    redirect: (context, state) => _redirect(context, state, authAsync),
     routes: [
-      // ── Splash / Auth ─────────────────────────────────────
+      // ── Auth Screens ─────────────────────────────────────
       GoRoute(
         path: AppRoutes.splash,
         name: 'splash',
-        builder: (context, state) => const _SplashPlaceholder(),
+        builder: (context, state) => const _SplashScreen(),
       ),
       GoRoute(
         path: AppRoutes.login,
         name: 'login',
-        builder: (context, state) => const _Placeholder(label: 'Login Screen'),
+        builder: (context, state) => const LoginScreen(),
       ),
       GoRoute(
         path: AppRoutes.register,
         name: 'register',
-        builder: (context, state) =>
-            const _Placeholder(label: 'Register Screen'),
+        builder: (context, state) => const RegisterScreen(),
       ),
       GoRoute(
         path: AppRoutes.forgotPassword,
         name: 'forgotPassword',
-        builder: (context, state) =>
-            const _Placeholder(label: 'Forgot Password Screen'),
+        builder: (context, state) => const ForgotPasswordScreen(),
       ),
 
       // ── Main Shell (Bottom Navigation) ───────────────────
@@ -270,11 +277,32 @@ GoRouter appRouter(Ref ref) {
   );
 }
 
-// ─── Redirect Guard ────────────────────────────────────────────────────────────
-// TODO (Sprint 1.2): Implement auth + admin role guard sau khi có AuthProvider
-String? _redirect(BuildContext context, GoRouterState state) {
-  // Placeholder: không redirect trong Sprint 1.1
-  // Sẽ implement sau khi có authStateProvider
+// ─── Auth Redirect Guard ─────────────────────────────────────────────────────
+String? _redirect(
+  BuildContext context,
+  GoRouterState state,
+  AsyncValue<UserEntity?> authAsync,
+) {
+  // Đang loading → không redirect
+  if (authAsync.isLoading) return null;
+
+  final isLoggedIn = authAsync.when(
+    data: (user) => user != null,
+    loading: () => false,
+    error: (_, _) => false,
+  );
+  final location = state.uri.toString();
+
+  // Splash → luôn cho phép
+  if (location == AppRoutes.splash) return null;
+
+  final isAuthRoute = location == AppRoutes.login ||
+      location == AppRoutes.register ||
+      location == AppRoutes.forgotPassword;
+
+  if (isLoggedIn && isAuthRoute) return AppRoutes.home;
+  if (!isLoggedIn && !isAuthRoute) return AppRoutes.login;
+
   return null;
 }
 
@@ -346,23 +374,30 @@ class _MainShell extends StatelessWidget {
   }
 }
 
-// ─── Splash Placeholder ───────────────────────────────────────────────────────
-class _SplashPlaceholder extends StatefulWidget {
-  const _SplashPlaceholder();
+// ─── Splash Screen ──────────────────────────────────────────────────────────────
+class _SplashScreen extends ConsumerStatefulWidget {
+  const _SplashScreen();
 
   @override
-  State<_SplashPlaceholder> createState() => _SplashPlaceholderState();
+  ConsumerState<_SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashPlaceholderState extends State<_SplashPlaceholder> {
+class _SplashScreenState extends ConsumerState<_SplashScreen> {
   Timer? _timer;
 
   @override
   void initState() {
     super.initState();
-    // TODO (Sprint 1.2): Check auth state → navigate accordingly
+    // Sau 2 giây, router sẽ tự redirect dựa vào auth state
     _timer = Timer(const Duration(seconds: 2), () {
-      if (mounted) context.go(AppRoutes.home);
+      if (!mounted) return;
+      final asyncUser = ref.read(authStateProvider);
+      final isLoggedIn = asyncUser.when(
+        data: (user) => user != null,
+        loading: () => false,
+        error: (_, _) => false,
+      );
+      context.go(isLoggedIn ? AppRoutes.home : AppRoutes.login);
     });
   }
 
