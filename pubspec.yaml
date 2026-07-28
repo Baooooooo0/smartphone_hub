@@ -61,6 +61,11 @@ dependencies:
   google_fonts: ^8.2.0
 
   cupertino_icons: ^1.0.8
+  google_sign_in: 6.2.2
+
+dependency_overrides:
+  jni: ^1.0.2
+  jni_flutter: ^1.0.2
 
 dev_dependencies:
   flutter_test:
