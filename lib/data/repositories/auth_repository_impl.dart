@@ -78,6 +78,10 @@ class AuthRepositoryImpl implements AuthRepository {
       rethrow;
     } catch (e) {
       throw AuthFailure(message: 'Lỗi đăng nhập: $e');
+    } on Failure {
+      rethrow;
+    } catch (e) {
+      throw AuthFailure(message: 'Lỗi đăng nhập: $e');
     }
   }
 
@@ -98,6 +102,7 @@ class AuthRepositoryImpl implements AuthRepository {
       return _fetchOrCreateUser(userCredential.user!);
     } on FirebaseAuthException catch (e) {
       throw AppException.fromFirebaseAuth(e);
+    } on Failure {
     } on Failure {
       rethrow;
     } catch (e) {
@@ -207,6 +212,7 @@ class AuthRepositoryImpl implements AuthRepository {
         return UserModel.fromFirestore(doc.data()!, doc.id).toEntity();
       }
       // Tạo document mới (trường hợp đăng nhập Google/Email lần đầu)
+      // Tạo document mới (trường hợp đăng nhập Google/Email lần đầu)
       final userModel = UserModel(
         id: firebaseUser.uid,
         email: firebaseUser.email ?? '',
@@ -217,6 +223,20 @@ class AuthRepositoryImpl implements AuthRepository {
       );
       await _users.doc(firebaseUser.uid).set(userModel.toFirestore());
       return userModel.toEntity();
+    } catch (e) {
+      // Fallback: Nếu Firestore chưa tạo DB hoặc bị lỗi mạng/gRPC,
+      // vẫn trả về UserEntity từ Firebase Auth để không chặn đăng nhập
+      final fallbackUser = UserModel(
+        id: firebaseUser.uid,
+        email: firebaseUser.email ?? '',
+        displayName: firebaseUser.displayName ?? '',
+        photoURL: firebaseUser.photoURL ?? '',
+        role: 'customer',
+        createdAt: DateTime.now(),
+      );
+      // Thử lưu vào Firestore ngầm (nếu có kết nối sau)
+      _users.doc(firebaseUser.uid).set(fallbackUser.toFirestore()).catchError((_) {});
+      return fallbackUser.toEntity();
     } catch (e) {
       // Fallback: Nếu Firestore chưa tạo DB hoặc bị lỗi mạng/gRPC,
       // vẫn trả về UserEntity từ Firebase Auth để không chặn đăng nhập
