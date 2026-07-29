@@ -31,7 +31,10 @@ class AppException implements Exception {
     return switch (e.code) {
       'permission-denied' => const PermissionFailure(),
       'not-found' => const NotFoundFailure(),
-      'unavailable' => const NetworkFailure(),
+      'unavailable' => ServerFailure(
+          message: e.message ?? 'Dịch vụ Firestore tạm thời không khả dụng',
+          code: e.code,
+        ),
       'deadline-exceeded' => const NetworkFailure(
           message: 'Kết nối quá thời gian, thử lại sau',
         ),
