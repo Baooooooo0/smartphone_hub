@@ -8,6 +8,7 @@ import '../domain/usecases/auth/auth_usecases.dart';
 import '../presentation/auth/login/login_screen.dart';
 import '../presentation/auth/register/register_screen.dart';
 import '../presentation/auth/forgot_password/forgot_password_screen.dart';
+import '../presentation/home/home_screen.dart';
 
 part 'app_router.g.dart';
 
@@ -89,8 +90,7 @@ GoRouter appRouter(Ref ref) {
           GoRoute(
             path: AppRoutes.home,
             name: 'home',
-            builder: (context, state) =>
-                const _Placeholder(label: 'Home Screen'),
+            builder: (context, state) => const HomeScreen(),
           ),
           GoRoute(
             path: AppRoutes.search,
