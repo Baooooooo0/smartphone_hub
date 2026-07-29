@@ -2,6 +2,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../domain/entities/user_entity.dart';
 import '../../../domain/usecases/auth/auth_usecases.dart';
 import '../../../data/repositories/auth_repository_impl.dart';
+import '../../../core/errors/failures.dart';
 
 part 'auth_notifier.g.dart';
 
@@ -41,6 +42,11 @@ class AuthNotifier extends _$AuthNotifier {
   @override
   AuthState build() => const AuthState();
 
+  String _getErrorMessage(dynamic e) {
+    if (e is Failure) return e.message;
+    return e.toString();
+  }
+
   Future<void> signInWithEmail({
     required String email,
     required String password,
@@ -54,7 +60,7 @@ class AuthNotifier extends _$AuthNotifier {
     } catch (e) {
       state = state.copyWith(
         status: AuthStatus.error,
-        errorMessage: e.toString(),
+        errorMessage: _getErrorMessage(e),
       );
     }
   }
@@ -69,7 +75,7 @@ class AuthNotifier extends _$AuthNotifier {
     } catch (e) {
       state = state.copyWith(
         status: AuthStatus.error,
-        errorMessage: e.toString(),
+        errorMessage: _getErrorMessage(e),
       );
     }
   }
@@ -92,7 +98,7 @@ class AuthNotifier extends _$AuthNotifier {
     } catch (e) {
       state = state.copyWith(
         status: AuthStatus.error,
-        errorMessage: e.toString(),
+        errorMessage: _getErrorMessage(e),
       );
     }
   }
@@ -107,7 +113,7 @@ class AuthNotifier extends _$AuthNotifier {
     } catch (e) {
       state = state.copyWith(
         status: AuthStatus.error,
-        errorMessage: e.toString(),
+        errorMessage: _getErrorMessage(e),
       );
     }
   }
@@ -122,7 +128,7 @@ class AuthNotifier extends _$AuthNotifier {
     } catch (e) {
       state = state.copyWith(
         status: AuthStatus.error,
-        errorMessage: e.toString(),
+        errorMessage: _getErrorMessage(e),
       );
     }
   }
