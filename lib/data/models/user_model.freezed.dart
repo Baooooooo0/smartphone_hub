@@ -28,15 +28,7 @@ $AddressModelCopyWith<AddressModel> get copyWith => _$AddressModelCopyWithImpl<A
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AddressModel
-  &&(identical(other.label, label) || other.label == label)
-  &&(identical(other.recipientName, recipientName) || other.recipientName == recipientName)
-  &&(identical(other.phone, phone) || other.phone == phone)
-  &&(identical(other.street, street) || other.street == street)
-  &&(identical(other.ward, ward) || other.ward == ward)
-  &&(identical(other.district, district) || other.district == district)
-  &&(identical(other.province, province) || other.province == province)
-  &&(identical(other.isDefault, isDefault) || other.isDefault == isDefault));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AddressModel&&(identical(other.label, label) || other.label == label)&&(identical(other.recipientName, recipientName) || other.recipientName == recipientName)&&(identical(other.phone, phone) || other.phone == phone)&&(identical(other.street, street) || other.street == street)&&(identical(other.ward, ward) || other.ward == ward)&&(identical(other.district, district) || other.district == district)&&(identical(other.province, province) || other.province == province)&&(identical(other.isDefault, isDefault) || other.isDefault == isDefault));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
