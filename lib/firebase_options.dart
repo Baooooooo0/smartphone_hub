@@ -53,21 +53,11 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions android = FirebaseOptions(
-<<<<<<< HEAD
     apiKey: 'YOUR_API_KEY',
     appId: 'YOUR_APP_ID',
     messagingSenderId: 'YOUR_PROJECT_NUMBER',
-=======
-    apiKey: 'YOUR_API_KEY',
-    appId: 'YOUR_APP_ID',
-    messagingSenderId: 'YOUR_PROJECT_NUMBER',
->>>>>>> 8dff0fc (feat: initialize project architecture with Riverpod, GoRouter, core utilities, and Firebase configuration)
     projectId: 'smartphonehub-dev',
     storageBucket: 'smartphonehub-dev.firebasestorage.app',
   );
 }
-<<<<<<< HEAD
-=======
-
->>>>>>> 8dff0fc (feat: initialize project architecture with Riverpod, GoRouter, core utilities, and Firebase configuration)
 
