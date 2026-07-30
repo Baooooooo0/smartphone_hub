@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -302,7 +301,7 @@ String? _redirect(
   GoRouterState state,
   AsyncValue<UserEntity?> authAsync,
 ) {
-  // Đang loading → không redirect
+  // Đang loading → không redirect (ở lại Splash)
   if (authAsync.isLoading) return null;
 
   final isLoggedIn = authAsync.when(
@@ -312,8 +311,10 @@ String? _redirect(
   );
   final location = state.uri.toString();
 
-  // Splash → luôn cho phép
-  if (location == AppRoutes.splash) return null;
+  // Tự động chuyển hướng từ Splash sau khi auth state đã load xong
+  if (location == AppRoutes.splash) {
+    return isLoggedIn ? AppRoutes.home : AppRoutes.login;
+  }
 
   final isAuthRoute = location == AppRoutes.login ||
       location == AppRoutes.register ||
@@ -394,37 +395,8 @@ class _MainShell extends StatelessWidget {
 }
 
 // ─── Splash Screen ──────────────────────────────────────────────────────────────
-class _SplashScreen extends ConsumerStatefulWidget {
+class _SplashScreen extends StatelessWidget {
   const _SplashScreen();
-
-  @override
-  ConsumerState<_SplashScreen> createState() => _SplashScreenState();
-}
-
-class _SplashScreenState extends ConsumerState<_SplashScreen> {
-  Timer? _timer;
-
-  @override
-  void initState() {
-    super.initState();
-    // Sau 2 giây, router sẽ tự redirect dựa vào auth state
-    _timer = Timer(const Duration(seconds: 2), () {
-      if (!mounted) return;
-      final asyncUser = ref.read(authStateProvider);
-      final isLoggedIn = asyncUser.when(
-        data: (user) => user != null,
-        loading: () => false,
-        error: (_, _) => false,
-      );
-      context.go(isLoggedIn ? AppRoutes.home : AppRoutes.login);
-    });
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
