@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_sizes.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/seed_data.dart';
 import '../../router/app_router.dart';
 import 'providers/home_provider.dart';
 import 'widgets/home_banner_carousel.dart';
@@ -137,6 +138,46 @@ class _HomeAppBar extends ConsumerWidget {
         ],
       ),
       actions: [
+        // Seed Data icon
+        IconButton(
+          icon: const Icon(
+            Icons.cloud_upload_outlined,
+            color: AppColors.primary,
+          ),
+          tooltip: 'Nạp dữ liệu mẫu (Seed Data)',
+          onPressed: () async {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('⏳ Đang nạp 20+ sản phẩm mẫu vào Firestore...'),
+                duration: Duration(seconds: 3),
+              ),
+            );
+            try {
+              await SeedDataRunner.runSeed();
+              ref.invalidate(bannersProvider);
+              ref.invalidate(categoriesProvider);
+              ref.invalidate(featuredProductsProvider);
+              ref.invalidate(bestSellersProvider);
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('🎉 Nạp dữ liệu thành công! Hãy kéo xuống để làm mới.'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              }
+            } catch (e) {
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Lỗi nạp dữ liệu: $e'),
+                    backgroundColor: AppColors.error,
+                  ),
+                );
+              }
+            }
+          },
+        ),
         // Search icon
         IconButton(
           icon: const Icon(Icons.search_outlined, color: AppColors.textPrimary),
