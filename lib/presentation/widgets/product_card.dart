@@ -182,15 +182,22 @@ class _PriceRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
-          _formatPrice(product.displayPrice),
-          style: AppTypography.priceMedium,
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text(
+            _formatPrice(product.displayPrice),
+            style: AppTypography.priceMedium,
+          ),
         ),
         if (product.hasDiscount)
           Text(
             _formatPrice(product.price),
             style: AppTypography.priceOriginal,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
       ],
     );

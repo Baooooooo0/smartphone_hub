@@ -84,7 +84,7 @@ class _ProductSectionContent extends StatelessWidget {
         const SizedBox(height: AppSizes.md),
         // Horizontal list
         SizedBox(
-          height: 260,
+          height: 280,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: AppSizes.lg),
@@ -128,7 +128,7 @@ class _ProductSectionShimmer extends StatelessWidget {
         ),
         const SizedBox(height: AppSizes.md),
         SizedBox(
-          height: 260,
+          height: 280,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: AppSizes.lg),
@@ -139,7 +139,7 @@ class _ProductSectionShimmer extends StatelessWidget {
               highlightColor: AppColors.surface,
               child: Container(
                 width: AppSizes.productCardWidth,
-                height: 260,
+                height: 280,
                 decoration: BoxDecoration(
                   color: AppColors.surfaceVariant,
                   borderRadius:
