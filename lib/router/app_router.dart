@@ -50,16 +50,35 @@ abstract class AppRoutes {
   static const String adminReviews = '/admin/reviews';
 }
 
+// ─── Router Notifier ──────────────────────────────────────────────────────────
+class RouterNotifier extends ChangeNotifier {
+  final Ref _ref;
+
+  RouterNotifier(this._ref) {
+    _ref.listen<AsyncValue<UserEntity?>>(
+      authStateProvider,
+      (previous, next) => notifyListeners(),
+    );
+  }
+}
+
+final routerNotifierProvider = Provider<RouterNotifier>((ref) {
+  return RouterNotifier(ref);
+});
+
 // ─── Router Provider ──────────────────────────────────────────────────────────
 @riverpod
 GoRouter appRouter(Ref ref) {
-  // Lắng nghe auth state để trigger redirect khi đăng nhập/đăng xuất
-  final authAsync = ref.watch(authStateProvider);
+  final notifier = ref.watch(routerNotifierProvider);
 
   return GoRouter(
+    refreshListenable: notifier,
     initialLocation: AppRoutes.splash,
     debugLogDiagnostics: true,
-    redirect: (context, state) => _redirect(context, state, authAsync),
+    redirect: (context, state) {
+      final authAsync = ref.read(authStateProvider);
+      return _redirect(context, state, authAsync);
+    },
     routes: [
       // ── Auth Screens ─────────────────────────────────────
       GoRoute(
