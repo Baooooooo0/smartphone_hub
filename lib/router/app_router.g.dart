@@ -2,13 +2,6 @@
 
 part of 'app_router.dart';
 
-// **************************************************************************
-// RiverpodGenerator
-// **************************************************************************
-
-// GENERATED CODE - DO NOT MODIFY BY HAND
-// ignore_for_file: type=lint, type=warning
-
 @ProviderFor(appRouter)
 final appRouterProvider = AppRouterProvider._();
 
@@ -48,8 +41,4 @@ final class AppRouterProvider
   }
 }
 
-<<<<<<< HEAD
 String _$appRouterHash() => r'5f6b017f6739c8e724a5919f1d1854c1814a30aa';
-=======
-String _$appRouterHash() => r'85e87847340b9758fcba1833a1ab35ac952425db';
->>>>>>> 8dff0fc (feat: initialize project architecture with Riverpod, GoRouter, core utilities, and Firebase configuration)

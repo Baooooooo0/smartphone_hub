@@ -31,14 +31,11 @@ class AppException implements Exception {
     return switch (e.code) {
       'permission-denied' => const PermissionFailure(),
       'not-found' => const NotFoundFailure(),
-<<<<<<< HEAD
       'unavailable' => ServerFailure(
           message: e.message ?? 'Dịch vụ Firestore tạm thời không khả dụng',
           code: e.code,
         ),
-=======
       'unavailable' => const NetworkFailure(),
->>>>>>> 8dff0fc (feat: initialize project architecture with Riverpod, GoRouter, core utilities, and Firebase configuration)
       'deadline-exceeded' => const NetworkFailure(
           message: 'Kết nối quá thời gian, thử lại sau',
         ),
