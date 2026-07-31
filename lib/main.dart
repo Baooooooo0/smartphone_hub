@@ -3,6 +3,7 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 <<<<<<< HEAD
 import 'firebase_options.dart';
@@ -14,7 +15,9 @@ import 'router/app_router.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-<<<<<<< HEAD
+  // ─── Load Environment Variables ────────────────────────────
+  await dotenv.load(fileName: ".env");
+
   // ─── Firebase ──────────────────────────────────────────────
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
