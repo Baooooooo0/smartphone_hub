@@ -1,4 +1,6 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../domain/entities/product_entity.dart';
+import '../../domain/entities/product_filter.dart';
 import '../../domain/repositories/product_repository.dart';
 import '../datasources/remote/product_remote_datasource.dart';
 
@@ -31,6 +33,23 @@ class ProductRepositoryImpl implements ProductRepository {
       limit: limit,
     );
     return models.map((m) => m.toEntity()).toList();
+  }
+
+  @override
+  Future<(List<ProductEntity>, DocumentSnapshot?)> getProducts({
+    ProductFilter filter = const ProductFilter(),
+    ProductSort sort = ProductSort.newest,
+    int pageSize = 20,
+    DocumentSnapshot? startAfter,
+  }) async {
+    final (models, lastDoc) = await _remoteDataSource.getProducts(
+      filter: filter,
+      sort: sort,
+      pageSize: pageSize,
+      startAfter: startAfter,
+    );
+    final entities = models.map((m) => m.toEntity()).toList();
+    return (entities, lastDoc);
   }
 
   @override
