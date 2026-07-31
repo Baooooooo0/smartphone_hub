@@ -9,6 +9,7 @@ import '../presentation/auth/register/register_screen.dart';
 import '../presentation/auth/forgot_password/forgot_password_screen.dart';
 import '../presentation/home/home_screen.dart';
 
+
 part 'app_router.g.dart';
 
 // ─── Route Paths ──────────────────────────────────────────────────────────────
