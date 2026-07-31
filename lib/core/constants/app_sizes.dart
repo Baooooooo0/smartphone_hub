@@ -40,13 +40,8 @@ abstract class AppSizes {
   static const double inputBorderWidth = 1.5;
 
   // ─── Product Card ─────────────────────────────────────────────
-<<<<<<< HEAD
   static const double productCardWidth = 155.0;
   static const double productCardImageHeight = 135.0;
-=======
-  static const double productCardWidth = 160.0;
-  static const double productCardImageHeight = 160.0;
->>>>>>> 8dff0fc (feat: initialize project architecture with Riverpod, GoRouter, core utilities, and Firebase configuration)
   static const double productCardRadius = 16.0;
 
   // ─── Bottom Nav ──────────────────────────────────────────────

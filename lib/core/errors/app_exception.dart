@@ -35,7 +35,6 @@ class AppException implements Exception {
           message: e.message ?? 'Dịch vụ Firestore tạm thời không khả dụng',
           code: e.code,
         ),
-      'unavailable' => const NetworkFailure(),
       'deadline-exceeded' => const NetworkFailure(
           message: 'Kết nối quá thời gian, thử lại sau',
         ),
