@@ -16,11 +16,7 @@ AuthRepository authRepository(Ref ref) => AuthRepositoryImpl(
       firebaseAuth: FirebaseAuth.instance,
       firestore: FirebaseFirestore.instance,
       googleSignIn: GoogleSignIn(
-        serverClientId: dotenv.get(
-          'GOOGLE_SERVER_CLIENT_ID',
-          fallback:
-              'YOUR_SERVER_CLIENT_ID',
-        ),
+        serverClientId: dotenv.get('GOOGLE_SERVER_CLIENT_ID'),
       ),
     );
 
@@ -258,4 +254,3 @@ class AuthRepositoryImpl implements AuthRepository {
     }
   }
 }
-

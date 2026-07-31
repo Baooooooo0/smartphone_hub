@@ -48,4 +48,6 @@ app.*.map.json
 
 .env
 .agents/
+android/app/google-services.json
+firebase.json
 

@@ -54,26 +54,10 @@ class DefaultFirebaseOptions {
   }
 
   static FirebaseOptions get android => FirebaseOptions(
-        apiKey: dotenv.get(
-          'FIREBASE_ANDROID_API_KEY',
-          fallback: 'YOUR_API_KEY',
-        ),
-        appId: dotenv.get(
-          'FIREBASE_ANDROID_APP_ID',
-          fallback: 'YOUR_APP_ID',
-        ),
-        messagingSenderId: dotenv.get(
-          'FIREBASE_MESSAGING_SENDER_ID',
-          fallback: 'YOUR_PROJECT_NUMBER',
-        ),
-        projectId: dotenv.get(
-          'FIREBASE_PROJECT_ID',
-          fallback: 'smartphonehub-dev',
-        ),
-        storageBucket: dotenv.get(
-          'FIREBASE_STORAGE_BUCKET',
-          fallback: 'smartphonehub-dev.firebasestorage.app',
-        ),
+        apiKey: dotenv.get('FIREBASE_ANDROID_API_KEY'),
+        appId: dotenv.get('FIREBASE_ANDROID_APP_ID'),
+        messagingSenderId: dotenv.get('FIREBASE_MESSAGING_SENDER_ID'),
+        projectId: dotenv.get('FIREBASE_PROJECT_ID'),
+        storageBucket: dotenv.get('FIREBASE_STORAGE_BUCKET'),
       );
 }
-
