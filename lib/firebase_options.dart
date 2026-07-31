@@ -3,6 +3,7 @@
 import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
 import 'package:flutter/foundation.dart'
     show defaultTargetPlatform, kIsWeb, TargetPlatform;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 /// Default [FirebaseOptions] for use with your Firebase apps.
 ///
@@ -52,12 +53,27 @@ class DefaultFirebaseOptions {
     }
   }
 
-  static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'YOUR_API_KEY',
-    appId: 'YOUR_APP_ID',
-    messagingSenderId: 'YOUR_PROJECT_NUMBER',
-    projectId: 'smartphonehub-dev',
-    storageBucket: 'smartphonehub-dev.firebasestorage.app',
-  );
+  static FirebaseOptions get android => FirebaseOptions(
+        apiKey: dotenv.get(
+          'FIREBASE_ANDROID_API_KEY',
+          fallback: 'YOUR_API_KEY',
+        ),
+        appId: dotenv.get(
+          'FIREBASE_ANDROID_APP_ID',
+          fallback: 'YOUR_APP_ID',
+        ),
+        messagingSenderId: dotenv.get(
+          'FIREBASE_MESSAGING_SENDER_ID',
+          fallback: 'YOUR_PROJECT_NUMBER',
+        ),
+        projectId: dotenv.get(
+          'FIREBASE_PROJECT_ID',
+          fallback: 'smartphonehub-dev',
+        ),
+        storageBucket: dotenv.get(
+          'FIREBASE_STORAGE_BUCKET',
+          fallback: 'smartphonehub-dev.firebasestorage.app',
+        ),
+      );
 }
 

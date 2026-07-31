@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../domain/entities/user_entity.dart';
@@ -15,8 +16,11 @@ AuthRepository authRepository(Ref ref) => AuthRepositoryImpl(
       firebaseAuth: FirebaseAuth.instance,
       firestore: FirebaseFirestore.instance,
       googleSignIn: GoogleSignIn(
-        serverClientId:
-            'YOUR_SERVER_CLIENT_ID',
+        serverClientId: dotenv.get(
+          'GOOGLE_SERVER_CLIENT_ID',
+          fallback:
+              'YOUR_SERVER_CLIENT_ID',
+        ),
       ),
     );
 
