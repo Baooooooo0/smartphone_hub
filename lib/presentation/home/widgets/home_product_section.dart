@@ -5,7 +5,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../domain/entities/product_entity.dart';
-import '../../widgets/product_card.dart';
+import '../../product/widgets/product_card.dart';
 
 /// HomeProductSection — Section sản phẩm dạng cuộn ngang (Featured / Best Sellers)
 class HomeProductSection extends ConsumerWidget {

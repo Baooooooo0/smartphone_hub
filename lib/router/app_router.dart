@@ -8,6 +8,7 @@ import '../presentation/auth/login/login_screen.dart';
 import '../presentation/auth/register/register_screen.dart';
 import '../presentation/auth/forgot_password/forgot_password_screen.dart';
 import '../presentation/home/home_screen.dart';
+import '../presentation/product/list/product_list_screen.dart';
 
 
 part 'app_router.g.dart';
@@ -142,8 +143,14 @@ GoRouter appRouter(Ref ref) {
       GoRoute(
         path: AppRoutes.productList,
         name: 'productList',
-        builder: (context, state) =>
-            const _Placeholder(label: 'Product List Screen'),
+        builder: (context, state) {
+          final categoryId = state.uri.queryParameters['category'];
+          final title = state.uri.queryParameters['title'];
+          return ProductListScreen(
+            categoryId: categoryId,
+            title: title,
+          );
+        },
       ),
       GoRoute(
         path: AppRoutes.productDetail,
