@@ -7,6 +7,7 @@ import '../domain/usecases/auth/auth_usecases.dart';
 import '../presentation/auth/login/login_screen.dart';
 import '../presentation/auth/register/register_screen.dart';
 import '../presentation/auth/forgot_password/forgot_password_screen.dart';
+import '../presentation/cart/cart_screen.dart';
 import '../presentation/home/home_screen.dart';
 import '../presentation/product/detail/product_detail_screen.dart';
 import '../presentation/product/list/product_list_screen.dart';
@@ -122,8 +123,7 @@ GoRouter appRouter(Ref ref) {
           GoRoute(
             path: AppRoutes.cart,
             name: 'cart',
-            builder: (context, state) =>
-                const _Placeholder(label: 'Cart Screen'),
+            builder: (context, state) => const CartScreen(),
           ),
           GoRoute(
             path: AppRoutes.orderList,
