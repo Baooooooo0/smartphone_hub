@@ -8,6 +8,7 @@ import '../presentation/auth/login/login_screen.dart';
 import '../presentation/auth/register/register_screen.dart';
 import '../presentation/auth/forgot_password/forgot_password_screen.dart';
 import '../presentation/home/home_screen.dart';
+import '../presentation/product/detail/product_detail_screen.dart';
 import '../presentation/product/list/product_list_screen.dart';
 import '../presentation/search/search_screen.dart';
 
@@ -157,7 +158,7 @@ GoRouter appRouter(Ref ref) {
         name: 'productDetail',
         builder: (context, state) {
           final id = state.pathParameters['id']!;
-          return _Placeholder(label: 'Product Detail: $id');
+          return ProductDetailScreen(productId: id);
         },
       ),
 
