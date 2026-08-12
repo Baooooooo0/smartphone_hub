@@ -49,7 +49,6 @@ class PrimaryButton extends StatelessWidget {
               )
             : Row(
                 mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
                 children: [
                   if (icon != null) ...[
                     Icon(icon, size: AppSizes.iconSM),
@@ -61,6 +60,7 @@ class PrimaryButton extends StatelessWidget {
                       style: AppTypography.buttonLarge,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
                     ),
                   ),
                 ],

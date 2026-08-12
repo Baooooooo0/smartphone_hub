@@ -10,19 +10,17 @@ import '../../../domain/usecases/auth/auth_usecases.dart';
 part 'cart_provider.g.dart';
 
 // ─── Repository Provider ──────────────────────────────────────────────────────
-@riverpod
+@Riverpod(keepAlive: true)
 CartRepository cartRepository(Ref ref) {
   return CartRepositoryImpl();
 }
 
 // ─── StreamProvider Giỏ hàng Realtime ───────────────────────────────────────
-@riverpod
+@Riverpod(keepAlive: true)
 Stream<CartEntity> cartStream(Ref ref) {
   final user = ref.watch(authStateProvider).asData?.value;
-  if (user == null) {
-    return Stream.value(const CartEntity(userId: '', items: []));
-  }
-  return ref.watch(cartRepositoryProvider).watchCart(user.id);
+  final userId = user?.id ?? 'guest_user';
+  return ref.watch(cartRepositoryProvider).watchCart(userId);
 }
 
 // ─── Cart State ──────────────────────────────────────────────────────────────
@@ -75,14 +73,17 @@ class CartState {
 }
 
 // ─── Cart Notifier ───────────────────────────────────────────────────────────
-@riverpod
+@Riverpod(keepAlive: true)
 class CartNotifier extends _$CartNotifier {
   @override
   CartState build() {
     // Lắng nghe stream giỏ hàng từ Firestore
     final asyncCart = ref.watch(cartStreamProvider);
     final cartEntity = asyncCart.asData?.value ?? const CartEntity(userId: '', items: []);
-    return CartState(cart: cartEntity);
+    return CartState(
+      cart: cartEntity,
+      isLoading: asyncCart.isLoading,
+    );
   }
 
   String get _currentUserId {
@@ -109,9 +110,13 @@ class CartNotifier extends _$CartNotifier {
         quantity: quantity,
       );
       await repo.addToCart(_currentUserId, item);
-      state = state.copyWith(isLoading: false);
+      if (ref.mounted) {
+        state = state.copyWith(isLoading: false);
+      }
     } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: e.toString());
+      if (ref.mounted) {
+        state = state.copyWith(isLoading: false, errorMessage: e.toString());
+      }
     }
   }
 
@@ -125,7 +130,9 @@ class CartNotifier extends _$CartNotifier {
       final repo = ref.read(cartRepositoryProvider);
       await repo.updateQuantity(_currentUserId, productId, color, quantity);
     } catch (e) {
-      state = state.copyWith(errorMessage: e.toString());
+      if (ref.mounted) {
+        state = state.copyWith(errorMessage: e.toString());
+      }
     }
   }
 

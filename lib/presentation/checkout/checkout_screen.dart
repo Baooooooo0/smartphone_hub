@@ -206,308 +206,287 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           ),
         ),
       ),
-      body: items.isEmpty && checkoutState.createdOrderId == null
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(
-                    Icons.shopping_cart_outlined,
-                    size: 64,
-                    color: AppColors.textTertiary,
-                  ),
-                  const SizedBox(height: AppSizes.md),
-                  Text(
-                    'Không có sản phẩm để thanh toán',
-                    style: AppTypography.titleMedium.copyWith(
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                  const SizedBox(height: AppSizes.lg),
-                  ElevatedButton(
-                    onPressed: () => context.go(AppRoutes.home),
-                    child: const Text('Tiếp tục mua sắm'),
-                  ),
-                ],
-              ),
+      body: cartState.isLoading
+          ? const Center(
+              child: CircularProgressIndicator(color: AppColors.primary),
             )
-          : Stack(
-              children: [
-                SingleChildScrollView(
-                  padding: const EdgeInsets.all(AppSizes.lg),
+          : items.isEmpty && checkoutState.createdOrderId == null
+              ? Center(
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      // 1. Địa chỉ giao hàng
-                      CheckoutAddressCard(
-                        address: checkoutState.selectedAddress,
-                        onChangeAddress: _openAddressSheet,
+                      const Icon(
+                        Icons.shopping_cart_outlined,
+                        size: 64,
+                        color: AppColors.textTertiary,
                       ),
-                      const SizedBox(height: AppSizes.lg),
-
-                      // 2. Danh sách sản phẩm
-                      Container(
-                        decoration: BoxDecoration(
-                          color: AppColors.surface,
-                          borderRadius: BorderRadius.circular(AppSizes.radiusLG),
-                          border: Border.all(color: AppColors.border),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.03),
-                              blurRadius: 10,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        padding: const EdgeInsets.all(AppSizes.lg),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            InkWell(
-                              onTap: () {
-                                setState(() {
-                                  _isItemsExpanded = !_isItemsExpanded;
-                                });
-                              },
-                              child: Row(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(AppSizes.xs + 2),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.primary.withValues(alpha: 0.1),
-                                      borderRadius: BorderRadius.circular(AppSizes.sm),
-                                    ),
-                                    child: const Icon(
-                                      Icons.shopping_bag_rounded,
-                                      color: AppColors.primary,
-                                      size: AppSizes.iconMD,
-                                    ),
-                                  ),
-                                  const SizedBox(width: AppSizes.sm),
-                                  Text(
-                                    'Sản phẩm (${items.length})',
-                                    style: AppTypography.titleMedium.copyWith(
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                  const Spacer(),
-                                  Icon(
-                                    _isItemsExpanded
-                                        ? Icons.keyboard_arrow_up_rounded
-                                        : Icons.keyboard_arrow_down_rounded,
-                                    color: AppColors.textSecondary,
-                                  ),
-                                ],
-                              ),
-                            ),
-                            if (_isItemsExpanded) ...[
-                              const Divider(height: AppSizes.lg, color: AppColors.border),
-                              ...items.map((item) => CheckoutItemTile(item: item)),
-                            ],
-                          ],
+                      const SizedBox(height: AppSizes.md),
+                      Text(
+                        'Không có sản phẩm để thanh toán',
+                        style: AppTypography.titleMedium.copyWith(
+                          color: AppColors.textSecondary,
                         ),
                       ),
                       const SizedBox(height: AppSizes.lg),
-
-                      // 3. Phương thức thanh toán
-                      CheckoutPaymentSelector(
-                        selectedMethod: checkoutState.paymentMethod,
-                        onMethodSelected: (method) {
-                          ref
-                              .read(checkoutProvider.notifier)
-                              .selectPaymentMethod(method);
-                        },
+                      ElevatedButton(
+                        onPressed: () => context.go(AppRoutes.home),
+                        child: const Text('Tiếp tục mua sắm'),
                       ),
-                      const SizedBox(height: AppSizes.lg),
-
-                      // 4. Ghi chú đơn hàng
-                      Container(
-                        decoration: BoxDecoration(
-                          color: AppColors.surface,
-                          borderRadius: BorderRadius.circular(AppSizes.radiusLG),
-                          border: Border.all(color: AppColors.border),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.03),
-                              blurRadius: 10,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        padding: const EdgeInsets.all(AppSizes.lg),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(AppSizes.xs + 2),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.primary.withValues(alpha: 0.1),
-                                    borderRadius: BorderRadius.circular(AppSizes.sm),
-                                  ),
-                                  child: const Icon(
-                                    Icons.note_alt_rounded,
-                                    color: AppColors.primary,
-                                    size: AppSizes.iconMD,
-                                  ),
-                                ),
-                                const SizedBox(width: AppSizes.sm),
-                                Text(
-                                  'Ghi chú cho người bán',
-                                  style: AppTypography.titleMedium.copyWith(
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: AppSizes.md),
-                            TextField(
-                              controller: _noteController,
-                              maxLines: 2,
-                              decoration: const InputDecoration(
-                                hintText: 'Nhập lời nhắn (VD: Giao hàng vào giờ hành chính)',
-                                border: OutlineInputBorder(),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: AppSizes.lg),
-
-                      // 5. Chi tiết thanh toán / Summary
-                      Container(
-                        decoration: BoxDecoration(
-                          color: AppColors.surface,
-                          borderRadius: BorderRadius.circular(AppSizes.radiusLG),
-                          border: Border.all(color: AppColors.border),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.03),
-                              blurRadius: 10,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        padding: const EdgeInsets.all(AppSizes.lg),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Chi tiết thanh toán',
-                              style: AppTypography.titleMedium.copyWith(
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            const Divider(height: AppSizes.lg, color: AppColors.border),
-                            _buildSummaryRow(
-                              'Tiền hàng (${cartState.cart.totalQuantity} sản phẩm)',
-                              CurrencyFormatter.format(cartState.subtotal),
-                            ),
-                            const SizedBox(height: AppSizes.sm),
-                            _buildSummaryRow(
-                              'Phí vận chuyển',
-                              cartState.shippingFee == 0
-                                  ? 'Miễn phí'
-                                  : CurrencyFormatter.format(cartState.shippingFee),
-                              isFreeShipping: cartState.shippingFee == 0,
-                            ),
-                            if (cartState.discountAmount > 0) ...[
-                              const SizedBox(height: AppSizes.sm),
-                              _buildSummaryRow(
-                                'Giảm giá (${cartState.appliedVoucherCode})',
-                                '-${CurrencyFormatter.format(cartState.discountAmount)}',
-                                isDiscount: true,
-                              ),
-                            ],
-                            const Divider(height: AppSizes.lg, color: AppColors.border),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  'Tổng thanh toán',
-                                  style: AppTypography.titleMedium.copyWith(
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                                Text(
-                                  CurrencyFormatter.format(cartState.totalPrice),
-                                  style: AppTypography.headlineSmall.copyWith(
-                                    color: AppColors.primary,
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      // Extra spacing cho sticky bottom bar
-                      const SizedBox(height: 110),
                     ],
                   ),
-                ),
-
-                // Sticky Bottom Bar
-                Positioned(
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSizes.lg,
-                      vertical: AppSizes.md,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.08),
-                          blurRadius: 16,
-                          offset: const Offset(0, -4),
-                        ),
-                      ],
-                    ),
-                    child: SafeArea(
-                      child: Row(
+                )
+              : Column(
+                  children: [
+                    Expanded(
+                      child: ListView(
+                        padding: const EdgeInsets.all(AppSizes.lg),
                         children: [
-                          Expanded(
+                          // 1. Địa chỉ giao hàng
+                          CheckoutAddressCard(
+                            address: checkoutState.selectedAddress,
+                            onChangeAddress: _openAddressSheet,
+                          ),
+                          const SizedBox(height: AppSizes.lg),
+
+                          // 2. Danh sách sản phẩm
+                          Container(
+                            decoration: BoxDecoration(
+                              color: AppColors.surface,
+                              borderRadius: BorderRadius.circular(AppSizes.radiusLG),
+                              border: Border.all(color: AppColors.border),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.03),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            padding: const EdgeInsets.all(AppSizes.lg),
                             child: Column(
-                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Text(
+                                      'Sản phẩm trong đơn (${items.length})',
+                                      style: AppTypography.titleMedium.copyWith(
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                    const Spacer(),
+                                    IconButton(
+                                      icon: Icon(
+                                        _isItemsExpanded
+                                            ? Icons.keyboard_arrow_up
+                                            : Icons.keyboard_arrow_down,
+                                      ),
+                                      onPressed: () {
+                                        setState(() {
+                                          _isItemsExpanded = !_isItemsExpanded;
+                                        });
+                                      },
+                                    ),
+                                  ],
+                                ),
+                                if (_isItemsExpanded) ...[
+                                  const Divider(color: AppColors.border),
+                                  ...items.map((item) => CheckoutItemTile(item: item)),
+                                ],
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: AppSizes.lg),
+
+                          // 3. Phương thức thanh toán
+                          Container(
+                            decoration: BoxDecoration(
+                              color: AppColors.surface,
+                              borderRadius: BorderRadius.circular(AppSizes.radiusLG),
+                              border: Border.all(color: AppColors.border),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.03),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            padding: const EdgeInsets.all(AppSizes.lg),
+                            child: CheckoutPaymentSelector(
+                              selectedMethod: checkoutState.paymentMethod,
+                              onMethodSelected: (method) {
+                                ref
+                                    .read(checkoutProvider.notifier)
+                                    .selectPaymentMethod(method);
+                              },
+                            ),
+                          ),
+                          const SizedBox(height: AppSizes.lg),
+
+                          // 4. Ghi chú đơn hàng
+                          Container(
+                            decoration: BoxDecoration(
+                              color: AppColors.surface,
+                              borderRadius: BorderRadius.circular(AppSizes.radiusLG),
+                              border: Border.all(color: AppColors.border),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.03),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            padding: const EdgeInsets.all(AppSizes.lg),
+                            child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Tổng cộng:',
-                                  style: AppTypography.labelSmall.copyWith(
-                                    color: AppColors.textSecondary,
+                                  'Ghi chú đơn hàng',
+                                  style: AppTypography.titleMedium.copyWith(
+                                    fontWeight: FontWeight.w700,
                                   ),
                                 ),
-                                Text(
-                                  CurrencyFormatter.format(cartState.totalPrice),
-                                  style: AppTypography.titleLarge.copyWith(
-                                    color: AppColors.primary,
-                                    fontWeight: FontWeight.w800,
+                                const SizedBox(height: AppSizes.sm),
+                                TextField(
+                                  controller: _noteController,
+                                  maxLines: 2,
+                                  decoration: const InputDecoration(
+                                    hintText: 'Nhập lời nhắn cho người bán (nếu có)...',
+                                    border: OutlineInputBorder(),
                                   ),
                                 ),
                               ],
                             ),
                           ),
-                          const SizedBox(width: AppSizes.md),
-                          Expanded(
-                            child: PrimaryButton(
-                              label: 'Đặt hàng',
-                              isLoading: checkoutState.isLoading,
-                              onPressed: checkoutState.isLoading ? null : _handlePlaceOrder,
+                          const SizedBox(height: AppSizes.lg),
+
+                          // 5. Tóm tắt chi phí
+                          Container(
+                            decoration: BoxDecoration(
+                              color: AppColors.surface,
+                              borderRadius: BorderRadius.circular(AppSizes.radiusLG),
+                              border: Border.all(color: AppColors.border),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.03),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            padding: const EdgeInsets.all(AppSizes.lg),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Chi tiết chi phí',
+                                  style: AppTypography.titleMedium.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                const Divider(height: AppSizes.lg, color: AppColors.border),
+                                _buildSummaryRow(
+                                  'Tiền hàng (${items.fold(0, (sum, i) => sum + i.quantity)} SP)',
+                                  CurrencyFormatter.format(cartState.subtotal),
+                                ),
+                                const SizedBox(height: AppSizes.sm),
+                                _buildSummaryRow(
+                                  'Phí vận chuyển',
+                                  cartState.shippingFee == 0
+                                      ? 'Miễn phí'
+                                      : CurrencyFormatter.format(cartState.shippingFee),
+                                  isFreeShipping: cartState.shippingFee == 0,
+                                ),
+                                if (cartState.discountAmount > 0) ...[
+                                  const SizedBox(height: AppSizes.sm),
+                                  _buildSummaryRow(
+                                    'Voucher giảm giá',
+                                    '-${CurrencyFormatter.format(cartState.discountAmount)}',
+                                    isDiscount: true,
+                                  ),
+                                ],
+                                const Divider(height: AppSizes.lg, color: AppColors.border),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      'Tổng thanh toán',
+                                      style: AppTypography.titleMedium.copyWith(
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                    Text(
+                                      CurrencyFormatter.format(cartState.totalPrice),
+                                      style: AppTypography.headlineSmall.copyWith(
+                                        color: AppColors.primary,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
                             ),
                           ),
                         ],
                       ),
                     ),
-                  ),
+
+                    // Bottom Bar
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSizes.lg,
+                        vertical: AppSizes.md,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.08),
+                            blurRadius: 16,
+                            offset: const Offset(0, -4),
+                          ),
+                        ],
+                      ),
+                      child: SafeArea(
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Tổng cộng:',
+                                    style: AppTypography.labelSmall.copyWith(
+                                      color: AppColors.textSecondary,
+                                    ),
+                                  ),
+                                  Text(
+                                    CurrencyFormatter.format(cartState.totalPrice),
+                                    style: AppTypography.titleLarge.copyWith(
+                                      color: AppColors.primary,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: AppSizes.md),
+                            Expanded(
+                              child: PrimaryButton(
+                                label: 'Đặt hàng',
+                                isLoading: checkoutState.isLoading,
+                                onPressed: checkoutState.isLoading ? null : _handlePlaceOrder,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
     );
   }
 

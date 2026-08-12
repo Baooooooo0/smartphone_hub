@@ -7,6 +7,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/helpers.dart';
 import '../../../../domain/usecases/products/product_usecases.dart';
 import '../../../../router/app_router.dart';
+import '../../cart/providers/cart_provider.dart';
 import 'widgets/product_color_selector.dart';
 import 'widgets/product_detail_bottom_bar.dart';
 import 'widgets/product_image_gallery.dart';
@@ -114,7 +115,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
                           backgroundColor: Colors.black.withValues(alpha: 0.3),
                           child: IconButton(
                             icon: const Icon(Icons.shopping_cart_outlined, color: Colors.white, size: 18),
-                            onPressed: () => context.push(AppRoutes.cart),
+                            onPressed: () => context.go(AppRoutes.cart),
                           ),
                         ),
                       ),
@@ -355,17 +356,27 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
                 child: ProductDetailBottomBar(
                   product: product,
                   selectedColor: selectedColor,
-                  onAddToCart: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('🛒 Đã thêm "${product.name}" (Màu: ${selectedColor ?? "Mặc định"}) vào giỏ hàng!'),
-                        backgroundColor: Colors.green,
-                        duration: const Duration(seconds: 2),
-                      ),
-                    );
+                  onAddToCart: () async {
+                    final color = selectedColor ??
+                        (product.colors.isNotEmpty ? product.colors.first : 'Mặc định');
+                    await ref.read(cartProvider.notifier).addToCart(product, color);
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('🛒 Đã thêm "${product.name}" (Màu: $color) vào giỏ hàng!'),
+                          backgroundColor: Colors.green,
+                          duration: const Duration(seconds: 2),
+                        ),
+                      );
+                    }
                   },
-                  onBuyNow: () {
-                    context.push(AppRoutes.checkout);
+                  onBuyNow: () async {
+                    final color = selectedColor ??
+                        (product.colors.isNotEmpty ? product.colors.first : 'Mặc định');
+                    await ref.read(cartProvider.notifier).addToCart(product, color);
+                    if (context.mounted) {
+                      context.push(AppRoutes.checkout);
+                    }
                   },
                 ),
               ),

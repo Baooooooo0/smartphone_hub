@@ -21,7 +21,7 @@ final class CartRepositoryProvider
         argument: null,
         retry: null,
         name: r'cartRepositoryProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -48,7 +48,7 @@ final class CartRepositoryProvider
   }
 }
 
-String _$cartRepositoryHash() => r'22ca5cdf3885997ba56a8e0f22ab08ec691bffaf';
+String _$cartRepositoryHash() => r'a77ec4e90aaa95e7c6cf0b2f79e6e4e841defc2c';
 
 @ProviderFor(cartStream)
 final cartStreamProvider = CartStreamProvider._();
@@ -67,7 +67,7 @@ final class CartStreamProvider
         argument: null,
         retry: null,
         name: r'cartStreamProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -86,7 +86,7 @@ final class CartStreamProvider
   }
 }
 
-String _$cartStreamHash() => r'1ca0719ae101e96a73dbfc2fb88540436763552c';
+String _$cartStreamHash() => r'29625ed512c4d11ca837f07740ffb1ef2fe081a5';
 
 @ProviderFor(CartNotifier)
 final cartProvider = CartNotifierProvider._();
@@ -99,7 +99,7 @@ final class CartNotifierProvider
         argument: null,
         retry: null,
         name: r'cartProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -120,7 +120,7 @@ final class CartNotifierProvider
   }
 }
 
-String _$cartNotifierHash() => r'ad20ef0c8c1412075fdcc4342602b6e1b87c8161';
+String _$cartNotifierHash() => r'f8081e098f5ccccabe5582d399011e747356552d';
 
 abstract class _$CartNotifier extends $Notifier<CartState> {
   CartState build();

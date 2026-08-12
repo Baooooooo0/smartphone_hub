@@ -125,25 +125,31 @@ class CartItemTile extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     // Price Display
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          CurrencyFormatter.format(item.price),
-                          style: AppTypography.titleMedium.copyWith(
-                            color: AppColors.primary,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        if (item.hasDiscount)
+                    Flexible(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
                           Text(
-                            CurrencyFormatter.format(item.originalPrice),
-                            style: AppTypography.labelSmall.copyWith(
-                              color: AppColors.textSecondary,
-                              decoration: TextDecoration.lineThrough,
+                            CurrencyFormatter.format(item.price),
+                            style: AppTypography.titleMedium.copyWith(
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.w700,
                             ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                      ],
+                          if (item.hasDiscount)
+                            Text(
+                              CurrencyFormatter.format(item.originalPrice),
+                              style: AppTypography.labelSmall.copyWith(
+                                color: AppColors.textSecondary,
+                                decoration: TextDecoration.lineThrough,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                        ],
+                      ),
                     ),
 
                     // Quantity Stepper (- 1 +)

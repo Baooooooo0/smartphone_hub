@@ -70,12 +70,11 @@ class CartScreen extends ConsumerWidget {
       ),
       body: cartState.cart.isEmpty
           ? const CartEmptyView()
-          : Stack(
+          : Column(
               children: [
-                SingleChildScrollView(
-                  padding: const EdgeInsets.all(AppSizes.lg),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                Expanded(
+                  child: ListView(
+                    padding: const EdgeInsets.all(AppSizes.lg),
                     children: [
                       // Danh sách sản phẩm trong giỏ
                       Text(
@@ -128,68 +127,60 @@ class CartScreen extends ConsumerWidget {
                           ref.read(cartProvider.notifier).removeVoucher();
                         },
                       ),
-
-                      // Bottom Spacing cho Sticky Bar
-                      const SizedBox(height: 100),
                     ],
                   ),
                 ),
 
-                // Sticky Bottom Bar nút Thanh toán
-                Positioned(
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSizes.lg,
-                      vertical: AppSizes.md,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.08),
-                          blurRadius: 16,
-                          offset: const Offset(0, -4),
+                // Bottom Bar nút Thanh toán
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSizes.lg,
+                    vertical: AppSizes.md,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.08),
+                        blurRadius: 16,
+                        offset: const Offset(0, -4),
+                      ),
+                    ],
+                  ),
+                  child: SafeArea(
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Tổng cộng:',
+                                style: AppTypography.labelSmall.copyWith(
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                              Text(
+                                CurrencyFormatter.format(cartState.totalPrice),
+                                style: AppTypography.titleLarge.copyWith(
+                                  color: AppColors.primary,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: AppSizes.md),
+                        Expanded(
+                          child: PrimaryButton(
+                            label: 'Thanh toán (${cartState.cart.totalQuantity})',
+                            onPressed: () {
+                              context.push(AppRoutes.checkout);
+                            },
+                          ),
                         ),
                       ],
-                    ),
-                    child: SafeArea(
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Tổng cộng:',
-                                  style: AppTypography.labelSmall.copyWith(
-                                    color: AppColors.textSecondary,
-                                  ),
-                                ),
-                                Text(
-                                  CurrencyFormatter.format(cartState.totalPrice),
-                                  style: AppTypography.titleLarge.copyWith(
-                                    color: AppColors.primary,
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: AppSizes.md),
-                          Expanded(
-                            child: PrimaryButton(
-                              label: 'Thanh toán (${cartState.cart.totalQuantity})',
-                              onPressed: () {
-                                context.push(AppRoutes.checkout);
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
                     ),
                   ),
                 ),

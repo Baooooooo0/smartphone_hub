@@ -141,11 +141,11 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.search_rounded),
-            onPressed: () => context.push(AppRoutes.search),
+            onPressed: () => context.go(AppRoutes.search),
           ),
           IconButton(
             icon: const Icon(Icons.shopping_cart_outlined),
-            onPressed: () => context.push(AppRoutes.cart),
+            onPressed: () => context.go(AppRoutes.cart),
           ),
         ],
       ),

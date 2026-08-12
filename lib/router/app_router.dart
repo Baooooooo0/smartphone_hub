@@ -10,6 +10,8 @@ import '../presentation/auth/forgot_password/forgot_password_screen.dart';
 import '../presentation/cart/cart_screen.dart';
 import '../presentation/checkout/checkout_screen.dart';
 import '../presentation/home/home_screen.dart';
+import '../presentation/orders/order_detail_screen.dart';
+import '../presentation/orders/order_list_screen.dart';
 import '../presentation/product/detail/product_detail_screen.dart';
 import '../presentation/product/list/product_list_screen.dart';
 import '../presentation/search/search_screen.dart';
@@ -129,8 +131,7 @@ GoRouter appRouter(Ref ref) {
           GoRoute(
             path: AppRoutes.orderList,
             name: 'orderList',
-            builder: (context, state) =>
-                const _Placeholder(label: 'Order List Screen'),
+            builder: (context, state) => const OrderListScreen(),
           ),
           GoRoute(
             path: AppRoutes.profile,
@@ -188,7 +189,7 @@ GoRouter appRouter(Ref ref) {
         name: 'orderDetail',
         builder: (context, state) {
           final id = state.pathParameters['id']!;
-          return _Placeholder(label: 'Order Detail: $id');
+          return OrderDetailScreen(orderId: id);
         },
       ),
 
