@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../domain/entities/category_entity.dart';
+import '../../../router/app_router.dart';
 import '../providers/home_provider.dart';
 
 /// HomeCategoriesSection — Danh mục cuộn ngang
@@ -77,7 +79,8 @@ class _CategoryChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        // TODO: navigate to /products?category=id (task 1.3.3)
+        final title = Uri.encodeComponent(category.name);
+        context.push('${AppRoutes.productList}?category=${category.id}&title=$title');
       },
       child: Column(
         mainAxisSize: MainAxisSize.min,

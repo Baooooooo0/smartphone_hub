@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
@@ -64,7 +65,7 @@ class _ProductSectionContent extends StatelessWidget {
               if (seeAllRoute != null)
                 TextButton(
                   onPressed: () {
-                    // TODO: navigate to seeAllRoute
+                    context.push(seeAllRoute!);
                   },
                   style: TextButton.styleFrom(
                     padding: EdgeInsets.zero,
@@ -90,10 +91,16 @@ class _ProductSectionContent extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: AppSizes.lg),
             itemCount: products.length,
             separatorBuilder: (context, index) => const SizedBox(width: AppSizes.md),
-            itemBuilder: (context, index) => ProductCard(
-              product: products[index],
-              width: AppSizes.productCardWidth,
-            ),
+            itemBuilder: (context, index) {
+              final product = products[index];
+              return ProductCard(
+                product: product,
+                width: AppSizes.productCardWidth,
+                onTap: () {
+                  context.push('/products/${product.id}');
+                },
+              );
+            },
           ),
         ),
       ],
