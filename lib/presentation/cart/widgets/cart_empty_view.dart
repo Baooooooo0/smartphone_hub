@@ -48,8 +48,8 @@ class CartEmptyView extends StatelessWidget {
               ),
             ),
             const SizedBox(height: AppSizes.xxl),
-            SizedBox(
-              width: 220,
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 280),
               child: PrimaryButton(
                 label: 'Khám phá sản phẩm ngay',
                 onPressed: () => context.go(AppRoutes.home),
