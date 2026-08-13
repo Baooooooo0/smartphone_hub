@@ -40,4 +40,16 @@ abstract interface class AuthRepository {
     String? photoURL,
     String? phoneNumber,
   });
+
+  /// Thêm địa chỉ giao hàng mới
+  Future<UserEntity> addAddress(String userId, Address address);
+
+  /// Cập nhật địa chỉ tại vị trí index
+  Future<UserEntity> updateAddress(String userId, int index, Address address);
+
+  /// Xóa địa chỉ tại vị trí index
+  Future<UserEntity> deleteAddress(String userId, int index);
+
+  /// Đặt địa chỉ tại index làm mặc định
+  Future<UserEntity> setDefaultAddress(String userId, int index);
 }

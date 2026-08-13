@@ -44,7 +44,7 @@ final class AuthNotifierProvider
   }
 }
 
-String _$authNotifierHash() => r'0d23c31cf406c7b32dad276bfed7d84f8dfc8902';
+String _$authNotifierHash() => r'1f5c819c27b28cb449fa361363a252a0fffbde1b';
 
 /// AuthNotifier — Quản lý state của login/register actions
 

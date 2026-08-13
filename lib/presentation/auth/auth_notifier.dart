@@ -136,4 +136,8 @@ class AuthNotifier extends _$AuthNotifier {
   void clearError() {
     state = state.copyWith(status: AuthStatus.initial);
   }
+
+  void setUser(UserEntity user) {
+    state = state.copyWith(user: user);
+  }
 }

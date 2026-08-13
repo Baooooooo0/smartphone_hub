@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../domain/entities/user_entity.dart';
 import '../domain/usecases/auth/auth_usecases.dart';
+import '../presentation/address/address_list_screen.dart';
 import '../presentation/auth/login/login_screen.dart';
 import '../presentation/auth/register/register_screen.dart';
 import '../presentation/auth/forgot_password/forgot_password_screen.dart';
@@ -203,8 +204,7 @@ GoRouter appRouter(Ref ref) {
       GoRoute(
         path: AppRoutes.addresses,
         name: 'addresses',
-        builder: (context, state) =>
-            const _Placeholder(label: 'Addresses Screen'),
+        builder: (context, state) => const AddressListScreen(),
       ),
       GoRoute(
         path: AppRoutes.notifications,

@@ -197,6 +197,133 @@ class AuthRepositoryImpl implements AuthRepository {
     }
   }
 
+  // ─── Add Address ─────────────────────────────────────────────
+  @override
+  Future<UserEntity> addAddress(String userId, Address address) async {
+    try {
+      final doc = await _users.doc(userId).get();
+      if (!doc.exists || doc.data() == null) {
+        throw const AuthFailure(message: 'Không tìm thấy người dùng');
+      }
+      final userModel = UserModel.fromFirestore(doc.data()!, doc.id);
+      var currentAddresses = List<Address>.from(userModel.toEntity().addresses);
+
+      final shouldBeDefault = address.isDefault || currentAddresses.isEmpty;
+      if (shouldBeDefault) {
+        currentAddresses = currentAddresses
+            .map((a) => a.copyWith(isDefault: false))
+            .toList();
+      }
+
+      final newAddress = address.copyWith(isDefault: shouldBeDefault);
+      currentAddresses.add(newAddress);
+
+      final addressMaps = currentAddresses
+          .map((a) => AddressModel.fromEntity(a).toJson())
+          .toList();
+      await _users.doc(userId).update({'addresses': addressMaps});
+
+      return _fetchOrCreateUser(_auth.currentUser!);
+    } on FirebaseException catch (e) {
+      throw AppException.fromFirestore(e);
+    }
+  }
+
+  // ─── Update Address ──────────────────────────────────────────
+  @override
+  Future<UserEntity> updateAddress(String userId, int index, Address address) async {
+    try {
+      final doc = await _users.doc(userId).get();
+      if (!doc.exists || doc.data() == null) {
+        throw const AuthFailure(message: 'Không tìm thấy người dùng');
+      }
+      final userModel = UserModel.fromFirestore(doc.data()!, doc.id);
+      var currentAddresses = List<Address>.from(userModel.toEntity().addresses);
+
+      if (index < 0 || index >= currentAddresses.length) {
+        throw const AuthFailure(message: 'Vị trí địa chỉ không hợp lệ');
+      }
+
+      if (address.isDefault) {
+        currentAddresses = currentAddresses
+            .map((a) => a.copyWith(isDefault: false))
+            .toList();
+      }
+
+      currentAddresses[index] = address;
+
+      final addressMaps = currentAddresses
+          .map((a) => AddressModel.fromEntity(a).toJson())
+          .toList();
+      await _users.doc(userId).update({'addresses': addressMaps});
+
+      return _fetchOrCreateUser(_auth.currentUser!);
+    } on FirebaseException catch (e) {
+      throw AppException.fromFirestore(e);
+    }
+  }
+
+  // ─── Delete Address ──────────────────────────────────────────
+  @override
+  Future<UserEntity> deleteAddress(String userId, int index) async {
+    try {
+      final doc = await _users.doc(userId).get();
+      if (!doc.exists || doc.data() == null) {
+        throw const AuthFailure(message: 'Không tìm thấy người dùng');
+      }
+      final userModel = UserModel.fromFirestore(doc.data()!, doc.id);
+      var currentAddresses = List<Address>.from(userModel.toEntity().addresses);
+
+      if (index < 0 || index >= currentAddresses.length) {
+        throw const AuthFailure(message: 'Vị trí địa chỉ không hợp lệ');
+      }
+
+      final deletedItem = currentAddresses.removeAt(index);
+      if (deletedItem.isDefault && currentAddresses.isNotEmpty) {
+        currentAddresses[0] = currentAddresses[0].copyWith(isDefault: true);
+      }
+
+      final addressMaps = currentAddresses
+          .map((a) => AddressModel.fromEntity(a).toJson())
+          .toList();
+      await _users.doc(userId).update({'addresses': addressMaps});
+
+      return _fetchOrCreateUser(_auth.currentUser!);
+    } on FirebaseException catch (e) {
+      throw AppException.fromFirestore(e);
+    }
+  }
+
+  // ─── Set Default Address ─────────────────────────────────────
+  @override
+  Future<UserEntity> setDefaultAddress(String userId, int index) async {
+    try {
+      final doc = await _users.doc(userId).get();
+      if (!doc.exists || doc.data() == null) {
+        throw const AuthFailure(message: 'Không tìm thấy người dùng');
+      }
+      final userModel = UserModel.fromFirestore(doc.data()!, doc.id);
+      var currentAddresses = List<Address>.from(userModel.toEntity().addresses);
+
+      if (index < 0 || index >= currentAddresses.length) {
+        throw const AuthFailure(message: 'Vị trí địa chỉ không hợp lệ');
+      }
+
+      currentAddresses = currentAddresses.asMap().entries.map((entry) {
+        return entry.value.copyWith(isDefault: entry.key == index);
+      }).toList();
+
+      final addressMaps = currentAddresses
+          .map((a) => AddressModel.fromEntity(a).toJson())
+          .toList();
+      await _users.doc(userId).update({'addresses': addressMaps});
+
+      return _fetchOrCreateUser(_auth.currentUser!);
+    } on FirebaseException catch (e) {
+      throw AppException.fromFirestore(e);
+    }
+  }
+
   // ─── Private Helpers ────────────────────────────────────────
 
   /// Lấy user từ Firestore, tạo mới nếu chưa tồn tại
