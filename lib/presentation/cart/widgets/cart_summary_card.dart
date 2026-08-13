@@ -77,58 +77,74 @@ class _CartSummaryCardState extends State<CartSummaryCard> {
                     ),
                   ),
                   const Spacer(),
-                  IconButton(
-                    icon: const Icon(Icons.close_rounded, color: AppColors.error, size: 18),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                    onPressed: widget.onRemoveVoucher,
+                  InkWell(
+                    onTap: widget.onRemoveVoucher,
+                    borderRadius: BorderRadius.circular(AppSizes.radiusSM),
+                    child: const Padding(
+                      padding: EdgeInsets.all(4.0),
+                      child: Icon(
+                        Icons.close_rounded,
+                        color: AppColors.error,
+                        size: 18,
+                      ),
+                    ),
                   ),
                 ],
               ),
             )
           else
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _voucherController,
-                    decoration: InputDecoration(
-                      hintText: 'Nhập mã (VD: HUB50K, HUB100K, VIP10)',
-                      hintStyle: AppTypography.bodySmall.copyWith(
-                        color: AppColors.textSecondary,
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: AppSizes.md,
-                        vertical: AppSizes.xs,
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppSizes.radiusSM),
-                        borderSide: const BorderSide(color: AppColors.border),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppSizes.radiusSM),
-                        borderSide: const BorderSide(color: AppColors.border),
+            SizedBox(
+              height: 44,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _voucherController,
+                      style: AppTypography.bodyMedium,
+                      decoration: InputDecoration(
+                        hintText: 'Nhập mã (VD: HUB50K, HUB100K, VIP10)',
+                        hintStyle: AppTypography.bodySmall.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: AppSizes.md,
+                          vertical: AppSizes.sm,
+                        ),
+                        isDense: true,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppSizes.radiusSM),
+                          borderSide: const BorderSide(color: AppColors.border),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppSizes.radiusSM),
+                          borderSide: const BorderSide(color: AppColors.border),
+                        ),
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(width: AppSizes.sm),
-                ElevatedButton(
-                  onPressed: () {
-                    if (_voucherController.text.trim().isNotEmpty) {
-                      widget.onApplyVoucher(_voucherController.text.trim());
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    padding: const EdgeInsets.symmetric(horizontal: AppSizes.md),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppSizes.radiusSM),
+                  const SizedBox(width: AppSizes.sm),
+                  SizedBox(
+                    height: 44,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        if (_voucherController.text.trim().isNotEmpty) {
+                          widget.onApplyVoucher(_voucherController.text.trim());
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: AppSizes.md),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppSizes.radiusSM),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: const Text('Áp dụng'),
                     ),
                   ),
-                  child: const Text('Áp dụng', style: TextStyle(color: Colors.white)),
-                ),
-              ],
+                ],
+              ),
             ),
           const SizedBox(height: AppSizes.lg),
           const Divider(),

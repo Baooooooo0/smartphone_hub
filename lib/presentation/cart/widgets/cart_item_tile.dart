@@ -85,15 +85,17 @@ class CartItemTile extends StatelessWidget {
                         ),
                       ),
                     ),
-                    IconButton(
-                      icon: const Icon(
-                        Icons.delete_outline_rounded,
-                        color: AppColors.error,
-                        size: 20,
+                    InkWell(
+                      onTap: onRemove,
+                      borderRadius: BorderRadius.circular(AppSizes.radiusSM),
+                      child: const Padding(
+                        padding: EdgeInsets.all(4.0),
+                        child: Icon(
+                          Icons.delete_outline_rounded,
+                          color: AppColors.error,
+                          size: 20,
+                        ),
                       ),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                      onPressed: onRemove,
                     ),
                   ],
                 ),
@@ -121,11 +123,10 @@ class CartItemTile extends StatelessWidget {
 
                 // Price & Quantity Buttons Row
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     // Price Display
-                    Flexible(
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -151,6 +152,7 @@ class CartItemTile extends StatelessWidget {
                         ],
                       ),
                     ),
+                    const SizedBox(width: AppSizes.xs),
 
                     // Quantity Stepper (- 1 +)
                     Container(
