@@ -228,7 +228,7 @@ class _AddEditAddressBottomSheetState
                   title: const Text('Đặt làm địa chỉ mặc định'),
                   subtitle: const Text('Tự động chọn khi đặt hàng'),
                   value: _isDefault,
-                  activeColor: AppColors.primary,
+                  activeThumbColor: AppColors.primary,
                   contentPadding: EdgeInsets.zero,
                   onChanged: (val) => setState(() => _isDefault = val),
                 ),

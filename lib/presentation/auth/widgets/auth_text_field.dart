@@ -15,6 +15,8 @@ class AuthTextField extends StatelessWidget {
   final String? Function(String?)? validator;
   final TextInputAction? textInputAction;
   final void Function(String)? onFieldSubmitted;
+  final bool readOnly;
+  final bool enabled;
 
   const AuthTextField({
     super.key,
@@ -28,6 +30,8 @@ class AuthTextField extends StatelessWidget {
     this.validator,
     this.textInputAction,
     this.onFieldSubmitted,
+    this.readOnly = false,
+    this.enabled = true,
   });
 
   @override
@@ -38,6 +42,8 @@ class AuthTextField extends StatelessWidget {
       keyboardType: keyboardType,
       textInputAction: textInputAction,
       onFieldSubmitted: onFieldSubmitted,
+      readOnly: readOnly,
+      enabled: enabled,
       style: AppTypography.bodyLarge,
       validator: validator,
       decoration: InputDecoration(
