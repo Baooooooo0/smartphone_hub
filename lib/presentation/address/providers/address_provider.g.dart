@@ -41,7 +41,7 @@ final class AddressNotifierProvider
   }
 }
 
-String _$addressNotifierHash() => r'91ceeb054d9858214f651af33bb35793579162f4';
+String _$addressNotifierHash() => r'dcf7dbc9664f9d8087b43310f7e45ec441e2e05a';
 
 abstract class _$AddressNotifier extends $Notifier<AddressState> {
   AddressState build();
