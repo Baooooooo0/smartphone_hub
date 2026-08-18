@@ -54,6 +54,22 @@ class SignOutUseCase {
   Future<void> call() => _repo.signOut();
 }
 
+class UpdateProfileUseCase {
+  final AuthRepository _repo;
+  UpdateProfileUseCase(this._repo);
+
+  Future<UserEntity> call({
+    String? displayName,
+    String? photoURL,
+    String? phoneNumber,
+  }) =>
+      _repo.updateProfile(
+        displayName: displayName,
+        photoURL: photoURL,
+        phoneNumber: phoneNumber,
+      );
+}
+
 // ─── Auth State Providers (manual — tránh nullable type issue với code gen) ───
 
 /// Stream trạng thái đăng nhập: null = chưa đăng nhập
