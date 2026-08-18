@@ -102,6 +102,12 @@ abstract class AppTypography {
         letterSpacing: 0.5,
       );
 
+  static TextStyle get caption => GoogleFonts.inter(
+        fontSize: 11,
+        fontWeight: FontWeight.w400,
+        color: AppColors.textSecondary,
+      );
+
   // ─── Price styles ────────────────────────────────────────────
   static TextStyle get priceHero => GoogleFonts.outfit(
         fontSize: 24,

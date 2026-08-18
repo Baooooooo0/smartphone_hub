@@ -45,6 +45,14 @@ class AppException implements Exception {
     };
   }
 
+  /// Map FirebaseException từ FirebaseStorage sang Failure
+  static Failure fromStorage(FirebaseException e) {
+    return ServerFailure(
+      message: e.message ?? 'Lỗi tải ảnh lên máy chủ',
+      code: e.code,
+    );
+  }
+
   @override
   String toString() => 'AppException(message: $message, code: $code)';
 }
