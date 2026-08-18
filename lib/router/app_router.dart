@@ -15,6 +15,8 @@ import '../presentation/orders/order_detail_screen.dart';
 import '../presentation/orders/order_list_screen.dart';
 import '../presentation/product/detail/product_detail_screen.dart';
 import '../presentation/product/list/product_list_screen.dart';
+import '../presentation/profile/edit_profile_screen.dart';
+import '../presentation/profile/profile_screen.dart';
 import '../presentation/search/search_screen.dart';
 
 
@@ -137,8 +139,7 @@ GoRouter appRouter(Ref ref) {
           GoRoute(
             path: AppRoutes.profile,
             name: 'profile',
-            builder: (context, state) =>
-                const _Placeholder(label: 'Profile Screen'),
+            builder: (context, state) => const ProfileScreen(),
           ),
         ],
       ),
@@ -198,8 +199,7 @@ GoRouter appRouter(Ref ref) {
       GoRoute(
         path: AppRoutes.editProfile,
         name: 'editProfile',
-        builder: (context, state) =>
-            const _Placeholder(label: 'Edit Profile Screen'),
+        builder: (context, state) => const EditProfileScreen(),
       ),
       GoRoute(
         path: AppRoutes.addresses,
