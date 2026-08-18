@@ -29,11 +29,9 @@ class AuthRepositoryImpl implements AuthRepository {
 
   AuthRepositoryImpl({
     required FirebaseAuth firebaseAuth,
-    required FirebaseFirestore firestore,
-    required GoogleSignIn googleSignIn,
-  })  : _auth = firebaseAuth,
-        _firestore = firestore,
-        _googleSignIn = googleSignIn;
+    required this._firestore,
+    required this._googleSignIn,
+  }) : _auth = firebaseAuth;
 
   CollectionReference<Map<String, dynamic>> get _users =>
       _firestore.collection('users');
@@ -71,7 +69,7 @@ class AuthRepositoryImpl implements AuthRepository {
         email: email,
         password: password,
       );
-      return _fetchOrCreateUser(credential.user!);
+      return await _fetchOrCreateUser(credential.user!);
     } on FirebaseAuthException catch (e) {
       throw AppException.fromFirebaseAuth(e);
     } on Failure {
@@ -95,7 +93,7 @@ class AuthRepositoryImpl implements AuthRepository {
         idToken: googleAuth.idToken,
       );
       final userCredential = await _auth.signInWithCredential(credential);
-      return _fetchOrCreateUser(userCredential.user!);
+      return await _fetchOrCreateUser(userCredential.user!);
     } on FirebaseAuthException catch (e) {
       throw AppException.fromFirebaseAuth(e);
     } on Failure {
@@ -191,7 +189,7 @@ class AuthRepositoryImpl implements AuthRepository {
           await _auth.currentUser!.updatePhotoURL(photoURL);
         }
       }
-      return _fetchOrCreateUser(_auth.currentUser!);
+      return await _fetchOrCreateUser(_auth.currentUser!);
     } on FirebaseException catch (e) {
       throw AppException.fromFirestore(e);
     }
@@ -223,7 +221,7 @@ class AuthRepositoryImpl implements AuthRepository {
           .toList();
       await _users.doc(userId).update({'addresses': addressMaps});
 
-      return _fetchOrCreateUser(_auth.currentUser!);
+      return await _fetchOrCreateUser(_auth.currentUser!);
     } on FirebaseException catch (e) {
       throw AppException.fromFirestore(e);
     }
@@ -257,7 +255,7 @@ class AuthRepositoryImpl implements AuthRepository {
           .toList();
       await _users.doc(userId).update({'addresses': addressMaps});
 
-      return _fetchOrCreateUser(_auth.currentUser!);
+      return await _fetchOrCreateUser(_auth.currentUser!);
     } on FirebaseException catch (e) {
       throw AppException.fromFirestore(e);
     }
@@ -288,7 +286,7 @@ class AuthRepositoryImpl implements AuthRepository {
           .toList();
       await _users.doc(userId).update({'addresses': addressMaps});
 
-      return _fetchOrCreateUser(_auth.currentUser!);
+      return await _fetchOrCreateUser(_auth.currentUser!);
     } on FirebaseException catch (e) {
       throw AppException.fromFirestore(e);
     }
@@ -318,7 +316,7 @@ class AuthRepositoryImpl implements AuthRepository {
           .toList();
       await _users.doc(userId).update({'addresses': addressMaps});
 
-      return _fetchOrCreateUser(_auth.currentUser!);
+      return await _fetchOrCreateUser(_auth.currentUser!);
     } on FirebaseException catch (e) {
       throw AppException.fromFirestore(e);
     }
