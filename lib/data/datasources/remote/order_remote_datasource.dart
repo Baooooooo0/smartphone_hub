@@ -51,11 +51,19 @@ class OrderRemoteDataSource {
   Stream<List<OrderModel>> watchUserOrders(String userId) {
     return _ordersRef
         .where('userId', isEqualTo: userId)
-        .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => OrderModel.fromFirestore(doc.data(), doc.id))
-            .toList());
+        .map((snapshot) {
+      final orders = snapshot.docs
+          .map((doc) => OrderModel.fromFirestore(doc.data(), doc.id))
+          .toList();
+      // Sắp xếp đơn hàng mới nhất lên đầu trong bộ nhớ (tránh lỗi require composite index)
+      orders.sort((a, b) {
+        final aTime = a.createdAt ?? DateTime(0);
+        final bTime = b.createdAt ?? DateTime(0);
+        return bTime.compareTo(aTime);
+      });
+      return orders;
+    });
   }
 
   /// Hủy đơn hàng
