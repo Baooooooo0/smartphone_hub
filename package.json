@@ -1,4 +1,7 @@
 {
+  "name": "smartphonehub-api",
+  "version": "1.0.0",
+  "type": "module",
   "dependencies": {
     "firebase-admin": "^14.2.0"
   }
