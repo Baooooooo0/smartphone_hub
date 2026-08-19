@@ -139,6 +139,25 @@ export default async function handler(req, res) {
                 }
             }
 
+            // Nếu vẫn chưa tìm thấy, duyệt 50 đơn gần nhất để so khớp không phân biệt hoa thường
+            if (!orderDoc.exists) {
+                const recentOrdersSnap = await db.collection("orders")
+                    .orderBy("createdAt", "desc")
+                    .limit(50)
+                    .get();
+
+                for (const doc of recentOrdersSnap.docs) {
+                    const docId = doc.id.toUpperCase();
+                    const fieldId = (doc.data().id || "").toUpperCase();
+                    if (docId === matchedOrderId || fieldId === matchedOrderId) {
+                        orderRef = doc.ref;
+                        orderDoc = doc;
+                        console.log(`Found matching order via case-insensitive search: ${doc.id}`);
+                        break;
+                    }
+                }
+            }
+
             if (orderDoc.exists) {
                 const orderData = orderDoc.data();
                 if (Number(transferAmount) >= (orderData.total || 0)) {
