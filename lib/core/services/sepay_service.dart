@@ -7,15 +7,15 @@ class SepayService {
 
   /// Ngân hàng thụ hưởng mặc định
   String get bankCode =>
-      dotenv.env['SEPAY_BANK_CODE'] ?? 'MB'; // MB: Ngân hàng Quân Đội
+      dotenv.env['SEPAY_BANK_CODE'] ?? 'VCB'; // VCB: Vietcombank
 
   /// Số tài khoản thụ hưởng
   String get accountNumber =>
-      dotenv.env['SEPAY_ACCOUNT_NUMBER'] ?? '0339999999';
+      dotenv.env['SEPAY_ACCOUNT_NUMBER'] ?? '0000000001';
 
   /// Tên chủ tài khoản
   String get accountName =>
-      dotenv.env['SEPAY_ACCOUNT_NAME'] ?? 'SMARTPHONEHUB';
+      dotenv.env['SEPAY_ACCOUNT_NAME'] ?? 'HO KINH DOANH TEST 3746';
 
   /// Sinh nội dung chuyển khoản chuẩn hóa cho SePay
   /// Ví dụ: SPHHUB6C838A12

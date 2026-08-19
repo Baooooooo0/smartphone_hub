@@ -363,7 +363,9 @@ class _SepayPaymentScreenState extends ConsumerState<SepayPaymentScreen> {
                   const SizedBox(height: AppSizes.md),
                   SepayInfoRow(
                     label: 'Ngân hàng thụ hưởng',
-                    value: '${sepay.bankCode} (Ngân hàng Quân Đội)',
+                    value: sepay.bankCode == 'VCB'
+                        ? 'Vietcombank (VCB)'
+                        : '${sepay.bankCode} (Ngân hàng Quân Đội)',
                     copyValue: sepay.bankCode,
                   ),
                   SepayInfoRow(

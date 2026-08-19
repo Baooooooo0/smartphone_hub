@@ -105,7 +105,7 @@ final class OrderDetailStreamProvider
   }
 }
 
-String _$orderDetailStreamHash() => r'211d26f4430b444660fc878d9646fca794822cfa';
+String _$orderDetailStreamHash() => r'3ae111dca143f5581bc291c0d66ea80069fd8680';
 
 final class OrderDetailStreamFamily extends $Family
     with $FunctionalFamilyOverride<Stream<OrderEntity?>, String> {

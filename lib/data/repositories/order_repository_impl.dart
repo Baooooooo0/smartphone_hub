@@ -22,6 +22,13 @@ class OrderRepositoryImpl implements OrderRepository {
   }
 
   @override
+  Stream<OrderEntity?> watchOrderById(String orderId) {
+    return _remoteDataSource
+        .watchOrderById(orderId)
+        .map((model) => model?.toEntity());
+  }
+
+  @override
   Stream<List<OrderEntity>> watchUserOrders(String userId) {
     return _remoteDataSource
         .watchUserOrders(userId)

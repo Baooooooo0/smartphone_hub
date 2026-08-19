@@ -7,6 +7,9 @@ abstract class OrderRepository {
   /// Lấy thông tin đơn hàng theo ID
   Future<OrderEntity?> getOrderById(String orderId);
 
+  /// Lấy thông tin đơn hàng theo ID (realtime stream)
+  Stream<OrderEntity?> watchOrderById(String orderId);
+
   /// Lấy danh sách đơn hàng của người dùng (realtime stream)
   Stream<List<OrderEntity>> watchUserOrders(String userId);
 

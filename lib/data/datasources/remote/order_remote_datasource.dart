@@ -39,6 +39,14 @@ class OrderRemoteDataSource {
     return OrderModel.fromFirestore(doc.data()!, doc.id);
   }
 
+  /// Stream chi tiết một đơn hàng theo orderId (realtime)
+  Stream<OrderModel?> watchOrderById(String orderId) {
+    return _ordersRef.doc(orderId).snapshots().map((doc) {
+      if (!doc.exists || doc.data() == null) return null;
+      return OrderModel.fromFirestore(doc.data()!, doc.id);
+    });
+  }
+
   /// Stream danh sách đơn hàng của người dùng theo userId
   Stream<List<OrderModel>> watchUserOrders(String userId) {
     return _ordersRef

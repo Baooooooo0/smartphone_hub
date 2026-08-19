@@ -19,23 +19,9 @@ Stream<List<OrderEntity>> userOrdersStream(Ref ref) {
 
 // ─── Single Order Detail Stream Provider ──────────────────────────────────────
 @riverpod
-Stream<OrderEntity?> orderDetailStream(Ref ref, String orderId) async* {
+Stream<OrderEntity?> orderDetailStream(Ref ref, String orderId) {
   final orderRepo = ref.watch(orderRepositoryProvider);
-  // Fetch initial
-  final initialOrder = await orderRepo.getOrderById(orderId);
-  if (initialOrder != null) {
-    yield initialOrder;
-  }
-
-  // Watch from user stream for real-time updates
-  final userOrdersAsync = ref.watch(userOrdersStreamProvider);
-  final orders = userOrdersAsync.asData?.value;
-  if (orders != null) {
-    final updatedOrder = orders.where((o) => o.id == orderId).firstOrNull;
-    if (updatedOrder != null) {
-      yield updatedOrder;
-    }
-  }
+  return orderRepo.watchOrderById(orderId);
 }
 
 // ─── Selected Tab Index Provider ─────────────────────────────────────────────
