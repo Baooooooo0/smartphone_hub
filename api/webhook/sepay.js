@@ -1,31 +1,49 @@
 import admin from "firebase-admin";
 
-if (!admin.apps.length) {
-    const privateKey = process.env.FIREBASE_PRIVATE_KEY
-        ? process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n").replace(/^"|"$/g, "")
-        : undefined;
+function getFirestoreDb() {
+    if (!admin.apps.length) {
+        let privateKey = process.env.FIREBASE_PRIVATE_KEY;
+        if (!privateKey) {
+            throw new Error("Missing FIREBASE_PRIVATE_KEY environment variable on Vercel");
+        }
+        if (!process.env.FIREBASE_PROJECT_ID) {
+            throw new Error("Missing FIREBASE_PROJECT_ID environment variable on Vercel");
+        }
+        if (!process.env.FIREBASE_CLIENT_EMAIL) {
+            throw new Error("Missing FIREBASE_CLIENT_EMAIL environment variable on Vercel");
+        }
 
-    admin.initializeApp({
-        credential: admin.credential.cert({
-            projectId: process.env.FIREBASE_PROJECT_ID,
-            clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-            privateKey: privateKey,
-        }),
-    });
+        // Xử lý các trường hợp format của private key
+        privateKey = privateKey.trim();
+        if (privateKey.startsWith('"') && privateKey.endsWith('"')) {
+            privateKey = privateKey.slice(1, -1);
+        }
+        privateKey = privateKey.replace(/\\n/g, "\n");
+
+        admin.initializeApp({
+            credential: admin.credential.cert({
+                projectId: process.env.FIREBASE_PROJECT_ID,
+                clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+                privateKey: privateKey,
+            }),
+        });
+    }
+    return admin.firestore();
 }
-
-const db = admin.firestore();
 
 export default async function handler(req, res) {
     if (req.method !== "POST") {
         return res.status(405).json({
             success: false,
-            message: "Method not allowed",
+            message: "Method not allowed. Only POST is accepted.",
         });
     }
 
     try {
-        // Kiểm tra API Key của SePay (nếu có cấu hình SEPAY_API_KEY trên Vercel)
+        // 1. Khởi tạo kết nối Firestore (Bắt lỗi an toàn nếu thiếu biến môi trường)
+        const db = getFirestoreDb();
+
+        // 2. Kiểm tra API Key của SePay (nếu có cấu hình SEPAY_API_KEY trên Vercel)
         const authHeader = req.headers["authorization"] || req.headers["Authorization"];
         if (process.env.SEPAY_API_KEY) {
             const expectedAuth = `Apikey ${process.env.SEPAY_API_KEY}`;
@@ -33,13 +51,13 @@ export default async function handler(req, res) {
                 console.warn("SePay webhook unauthorized request:", authHeader);
                 return res.status(401).json({
                     success: false,
-                    message: "Unauthorized",
+                    message: "Unauthorized request",
                 });
             }
         }
 
         const data = req.body || {};
-        console.log("SePay webhook payload:", data);
+        console.log("SePay webhook payload received:", JSON.stringify(data));
 
         const {
             id,
@@ -52,47 +70,48 @@ export default async function handler(req, res) {
             referenceCode,
         } = data;
 
-        if (!id || !transferAmount) {
+        if (!id || transferAmount === undefined || transferAmount === null) {
             return res.status(400).json({
                 success: false,
-                message: "Invalid transaction",
+                message: "Invalid transaction payload: missing id or transferAmount",
             });
         }
 
         // Chỉ xử lý tiền vào (tiền khách chuyển khoản mua hàng)
-        if (transferType !== "in") {
+        if (transferType && transferType !== "in") {
             return res.status(200).json({
                 success: true,
-                message: "Ignored outgoing transaction",
+                message: "Ignored outgoing transaction (transferType != 'in')",
             });
         }
 
         const transactionRef = db.collection("transactions").doc(String(id));
 
-        // Chống xử lý trùng giao dịch (Idempotency)
+        // 3. Chống xử lý trùng giao dịch (Idempotency)
         const transactionDoc = await transactionRef.get();
         if (transactionDoc.exists) {
+            console.log(`Transaction ${id} already processed.`);
             return res.status(200).json({
                 success: true,
                 message: "Transaction already processed",
             });
         }
 
-        // 1. Lưu bản ghi giao dịch
+        // 4. Lưu bản ghi giao dịch vào collection `transactions`
         await transactionRef.set({
             sepayId: String(id),
             amount: Number(transferAmount),
             content: content ?? "",
             code: code ?? null,
-            transferType,
+            transferType: transferType ?? "in",
             transactionDate: transactionDate ?? null,
             gateway: gateway ?? null,
             referenceCode: referenceCode ?? null,
             createdAt: admin.firestore.FieldValue.serverTimestamp(),
         });
+        console.log(`Transaction ${id} saved to Firestore successfully.`);
 
-        // 2. Tìm và cập nhật trạng thái đơn hàng tương ứng trong Firestore
-        // Cú pháp nội dung chuyển khoản thường là: SPHHUB<orderId> hoặc chứa orderId
+        // 5. Tìm và cập nhật trạng thái đơn hàng tương ứng trong Firestore
         const rawContent = (content || "").toUpperCase();
         let matchedOrderId = null;
 
@@ -104,11 +123,10 @@ export default async function handler(req, res) {
 
         let orderUpdated = false;
         if (matchedOrderId) {
-            // Thử tìm theo document ID trực tiếp
             let orderRef = db.collection("orders").doc(matchedOrderId);
             let orderDoc = await orderRef.get();
 
-            // Nếu không tìm thấy bằng ID trực tiếp, thử query theo field `id`
+            // Nếu không tìm thấy bằng Document ID trực tiếp, thử query theo field `id`
             if (!orderDoc.exists) {
                 const querySnap = await db.collection("orders")
                     .where("id", "==", matchedOrderId)
@@ -122,7 +140,6 @@ export default async function handler(req, res) {
 
             if (orderDoc.exists) {
                 const orderData = orderDoc.data();
-                // Kiểm tra số tiền chuyển khớp hoặc lớn hơn tổng tiền đơn hàng
                 if (Number(transferAmount) >= (orderData.total || 0)) {
                     await orderRef.update({
                         paymentStatus: "paid",
@@ -136,7 +153,7 @@ export default async function handler(req, res) {
                         }),
                     });
                     orderUpdated = true;
-                    console.log(`Order ${orderDoc.id} updated to PAID successfully!`);
+                    console.log(`Order ${orderDoc.id} updated to PAID in Firestore!`);
                 } else {
                     console.warn(`Amount mismatch for order ${orderDoc.id}: received ${transferAmount}, expected ${orderData.total}`);
                 }
@@ -151,11 +168,11 @@ export default async function handler(req, res) {
         });
 
     } catch (error) {
-        console.error("Webhook error:", error);
+        console.error("Webhook processing error:", error);
         return res.status(500).json({
             success: false,
             message: "Internal server error",
-            error: error.message,
+            error: error.message || String(error),
         });
     }
 }
