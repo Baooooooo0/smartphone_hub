@@ -36,14 +36,22 @@ class OrderRemoteDataSource {
   Future<OrderModel?> getOrderById(String orderId) async {
     final doc = await _ordersRef.doc(orderId).get();
     if (!doc.exists || doc.data() == null) return null;
-    return OrderModel.fromFirestore(doc.data()!, doc.id);
+    try {
+      return OrderModel.fromFirestore(doc.data()!, doc.id);
+    } catch (e) {
+      return null;
+    }
   }
 
   /// Stream chi tiết một đơn hàng theo orderId (realtime)
   Stream<OrderModel?> watchOrderById(String orderId) {
     return _ordersRef.doc(orderId).snapshots().map((doc) {
       if (!doc.exists || doc.data() == null) return null;
-      return OrderModel.fromFirestore(doc.data()!, doc.id);
+      try {
+        return OrderModel.fromFirestore(doc.data()!, doc.id);
+      } catch (e) {
+        return null;
+      }
     });
   }
 
@@ -54,7 +62,14 @@ class OrderRemoteDataSource {
         .snapshots()
         .map((snapshot) {
       final orders = snapshot.docs
-          .map((doc) => OrderModel.fromFirestore(doc.data(), doc.id))
+          .map((doc) {
+            try {
+              return OrderModel.fromFirestore(doc.data(), doc.id);
+            } catch (e) {
+              return null;
+            }
+          })
+          .whereType<OrderModel>()
           .toList();
       // Sắp xếp đơn hàng mới nhất lên đầu trong bộ nhớ (tránh lỗi require composite index)
       orders.sort((a, b) {

@@ -21,6 +21,31 @@ abstract class AddressModel with _$AddressModel {
   factory AddressModel.fromJson(Map<String, dynamic> json) =>
       _$AddressModelFromJson(json);
 
+  factory AddressModel.fromFirestore(dynamic json) {
+    if (json is! Map) {
+      return const AddressModel(
+        label: 'Mặc định',
+        recipientName: '',
+        phone: '',
+        street: '',
+        ward: '',
+        district: '',
+        province: '',
+        isDefault: true,
+      );
+    }
+    return AddressModel(
+      label: json['label'] as String? ?? 'Mặc định',
+      recipientName: json['recipientName'] as String? ?? '',
+      phone: json['phone'] as String? ?? '',
+      street: json['street'] as String? ?? '',
+      ward: json['ward'] as String? ?? '',
+      district: json['district'] as String? ?? '',
+      province: json['province'] as String? ?? '',
+      isDefault: json['isDefault'] as bool? ?? false,
+    );
+  }
+
   const AddressModel._();
 
   factory AddressModel.fromEntity(Address entity) => AddressModel(

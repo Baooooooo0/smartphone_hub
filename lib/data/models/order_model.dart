@@ -171,9 +171,7 @@ abstract class OrderModel with _$OrderModel {
       paymentMethod: data['paymentMethod'] as String? ?? 'cod',
       paymentStatus: data['paymentStatus'] as String? ?? 'unpaid',
       paymentRef: data['paymentRef'] as String? ?? '',
-      shippingAddress: AddressModel.fromJson(
-        data['shippingAddress'] as Map<String, dynamic>? ?? {},
-      ),
+      shippingAddress: AddressModel.fromFirestore(data['shippingAddress']),
       voucherId: data['voucherId'] as String?,
       voucherCode: data['voucherCode'] as String?,
       note: data['note'] as String? ?? '',
