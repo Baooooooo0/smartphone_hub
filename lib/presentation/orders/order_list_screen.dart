@@ -35,14 +35,18 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen>
   void initState() {
     super.initState();
     final initialIndex = ref.read(orderFilterIndexProvider);
+    final safeIndex = (initialIndex >= 0 && initialIndex < _tabs.length)
+        ? initialIndex
+        : 0;
+
     _tabController = TabController(
       length: _tabs.length,
       vsync: this,
-      initialIndex: initialIndex,
+      initialIndex: safeIndex,
     );
 
     _tabController.addListener(() {
-      if (_tabController.indexIsChanging) {
+      if (!_tabController.indexIsChanging) {
         ref
             .read(orderFilterIndexProvider.notifier)
             .setIndex(_tabController.index);
@@ -86,11 +90,6 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen>
         },
       ),
     );
-  }
-
-  List<OrderEntity> _filterOrders(List<OrderEntity> orders, String filterKey) {
-    if (filterKey == 'all') return orders;
-    return orders.where((o) => o.status == filterKey).toList();
   }
 
   @override
@@ -149,30 +148,76 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen>
           return TabBarView(
             controller: _tabController,
             children: _tabs.map((tab) {
-              final filteredOrders = _filterOrders(orders, tab['key']!);
-
-              if (filteredOrders.isEmpty) {
-                return _OrderEmptyView(filterTitle: tab['title']!);
-              }
-
-              return RefreshIndicator(
-                color: AppColors.primary,
+              return _OrderListView(
+                key: PageStorageKey('order_tab_${tab['key']}'),
+                orders: orders,
+                filterKey: tab['key']!,
+                filterTitle: tab['title']!,
+                onCancelOrder: (orderId) => _showCancelDialog(context, orderId),
                 onRefresh: () async {
                   ref.invalidate(userOrdersStreamProvider);
                 },
-                child: ListView.builder(
-                  padding: const EdgeInsets.all(AppSizes.lg),
-                  itemCount: filteredOrders.length,
-                  itemBuilder: (context, index) {
-                    final order = filteredOrders[index];
-                    return OrderCard(
-                      order: order,
-                      onCancelOrder: () => _showCancelDialog(context, order.id),
-                    );
-                  },
-                ),
               );
             }).toList(),
+          );
+        },
+      ),
+    );
+  }
+}
+
+// ─── Order Tab View With Keep Alive ──────────────────────────────────────────
+class _OrderListView extends StatefulWidget {
+  final List<OrderEntity> orders;
+  final String filterKey;
+  final String filterTitle;
+  final Function(String orderId) onCancelOrder;
+  final Future<void> Function() onRefresh;
+
+  const _OrderListView({
+    super.key,
+    required this.orders,
+    required this.filterKey,
+    required this.filterTitle,
+    required this.onCancelOrder,
+    required this.onRefresh,
+  });
+
+  @override
+  State<_OrderListView> createState() => _OrderListViewState();
+}
+
+class _OrderListViewState extends State<_OrderListView>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+
+    final filteredOrders = widget.filterKey == 'all'
+        ? widget.orders
+        : widget.orders.where((o) => o.status == widget.filterKey).toList();
+
+    if (filteredOrders.isEmpty) {
+      return _OrderEmptyView(filterTitle: widget.filterTitle);
+    }
+
+    return RefreshIndicator(
+      color: AppColors.primary,
+      onRefresh: widget.onRefresh,
+      child: ListView.builder(
+        key: PageStorageKey('order_list_${widget.filterKey}'),
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(AppSizes.lg),
+        itemCount: filteredOrders.length,
+        itemBuilder: (context, index) {
+          final order = filteredOrders[index];
+          return OrderCard(
+            key: ValueKey(order.id),
+            order: order,
+            onCancelOrder: () => widget.onCancelOrder(order.id),
           );
         },
       ),
