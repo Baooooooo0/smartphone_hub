@@ -14,7 +14,7 @@ function getFirestoreDb() {
             throw new Error("Missing FIREBASE_CLIENT_EMAIL environment variable on Vercel");
         }
 
-        // Xử lý các trường hợp format của private key
+        // Xử lý format của private key
         privateKey = privateKey.trim();
         if (privateKey.startsWith('"') && privateKey.endsWith('"')) {
             privateKey = privateKey.slice(1, -1);
@@ -41,7 +41,7 @@ export default async function handler(req, res) {
     }
 
     try {
-        // 1. Khởi tạo kết nối Firestore (Bắt lỗi an toàn nếu thiếu biến môi trường)
+        // 1. Khởi tạo kết nối Firestore
         const db = getFirestoreDb();
 
         // 2. Kiểm tra API Key của SePay (nếu có cấu hình SEPAY_API_KEY trên Vercel)
@@ -113,59 +113,81 @@ export default async function handler(req, res) {
         console.log(`Transaction ${id} saved to Firestore successfully.`);
 
         // 5. Tìm và cập nhật trạng thái đơn hàng tương ứng trong Firestore
-        const rawContent = (content || "").toUpperCase();
+        const rawContent = (content || "").toUpperCase().replace(/\s+/g, "");
         let matchedOrderId = null;
 
-        // Trích xuất mã đơn hàng từ nội dung (VD: SPHHUB12345, SPHHUB_ORD12345, ...)
+        // Trích xuất mã đơn hàng từ nội dung (VD: SPHHUBXI6TANBV2VJI1YC6AYVR -> XI6TANBV2VJI1YC6AYVR)
         const match = rawContent.match(/SPHHUB[_\-\s]?([A-Z0-9]+)/i);
         if (match && match[1]) {
             matchedOrderId = match[1];
         }
 
-        let orderUpdated = false;
+        console.log(`Extracted matchedOrderId: "${matchedOrderId}" from content: "${rawContent}"`);
+
+        let targetOrderDoc = null;
+
         if (matchedOrderId) {
-            let orderRef = db.collection("orders").doc(matchedOrderId);
-            let orderDoc = await orderRef.get();
+            // 5.1 Thử tìm Document ID chính xác
+            const directDoc = await db.collection("orders").doc(matchedOrderId).get();
+            if (directDoc.exists) {
+                targetOrderDoc = directDoc;
+            } else {
+                // 5.2 Tìm kiếm không phân biệt hoa thường (Case-Insensitive) trong Firestore
+                const ordersSnap = await db.collection("orders").limit(100).get();
+                for (const doc of ordersSnap.docs) {
+                    const docId = doc.id;
+                    const docData = doc.data() || {};
+                    const upperDocId = docId.toUpperCase();
+                    const upperFieldId = (docData.id || "").toUpperCase();
 
-            // Nếu không tìm thấy bằng Document ID trực tiếp, thử query theo field `id`
-            if (!orderDoc.exists) {
-                const querySnap = await db.collection("orders")
-                    .where("id", "==", matchedOrderId)
-                    .limit(1)
-                    .get();
-                if (!querySnap.empty) {
-                    orderRef = querySnap.docs[0].ref;
-                    orderDoc = querySnap.docs[0];
+                    if (
+                        upperDocId === matchedOrderId ||
+                        upperFieldId === matchedOrderId ||
+                        rawContent.includes(upperDocId) ||
+                        rawContent.includes(upperFieldId)
+                    ) {
+                        targetOrderDoc = doc;
+                        console.log(`Found order by case-insensitive matching: "${docId}" for search key "${matchedOrderId}"`);
+                        break;
+                    }
                 }
             }
+        }
 
-            if (orderDoc.exists) {
-                const orderData = orderDoc.data();
-                if (Number(transferAmount) >= (orderData.total || 0)) {
-                    await orderRef.update({
-                        paymentStatus: "paid",
+        let orderUpdated = false;
+        if (targetOrderDoc && targetOrderDoc.exists) {
+            const orderData = targetOrderDoc.data() || {};
+            const orderTotal = Number(orderData.total) || 0;
+            const receivedAmount = Number(transferAmount) || 0;
+
+            console.log(`Order ${targetOrderDoc.id} found. Total: ${orderTotal}, Received: ${receivedAmount}`);
+
+            if (receivedAmount >= orderTotal) {
+                await targetOrderDoc.ref.update({
+                    paymentStatus: "paid",
+                    status: "confirmed",
+                    paymentRef: String(id),
+                    updatedAt: FieldValue.serverTimestamp(),
+                    timeline: FieldValue.arrayUnion({
                         status: "confirmed",
-                        paymentRef: String(id),
-                        updatedAt: FieldValue.serverTimestamp(),
-                        timeline: FieldValue.arrayUnion({
-                            status: "confirmed",
-                            note: `Thanh toán SePay thành công (Mã GD: ${id})`,
-                            timestamp: new Date(),
-                        }),
-                    });
-                    orderUpdated = true;
-                    console.log(`Order ${orderDoc.id} updated to PAID in Firestore!`);
-                } else {
-                    console.warn(`Amount mismatch for order ${orderDoc.id}: received ${transferAmount}, expected ${orderData.total}`);
-                }
+                        note: `Thanh toán SePay thành công (Mã GD: ${id})`,
+                        timestamp: new Date(),
+                    }),
+                });
+                orderUpdated = true;
+                console.log(`SUCCESS: Order ${targetOrderDoc.id} updated to PAID in Firestore!`);
+            } else {
+                console.warn(`Amount mismatch for order ${targetOrderDoc.id}: received ${receivedAmount}, expected ${orderTotal}`);
             }
+        } else {
+            console.warn(`No matching order found for extracted key "${matchedOrderId}"`);
         }
 
         return res.status(200).json({
             success: true,
             message: "Transaction saved",
             orderUpdated,
-            orderId: matchedOrderId,
+            orderId: targetOrderDoc ? targetOrderDoc.id : matchedOrderId,
         });
 
     } catch (error) {
