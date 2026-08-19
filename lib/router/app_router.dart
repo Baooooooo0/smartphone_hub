@@ -10,6 +10,7 @@ import '../presentation/auth/register/register_screen.dart';
 import '../presentation/auth/forgot_password/forgot_password_screen.dart';
 import '../presentation/cart/cart_screen.dart';
 import '../presentation/checkout/checkout_screen.dart';
+import '../presentation/checkout/sepay_payment_screen.dart';
 import '../presentation/home/home_screen.dart';
 import '../presentation/orders/order_detail_screen.dart';
 import '../presentation/orders/order_list_screen.dart';
@@ -175,8 +176,10 @@ GoRouter appRouter(Ref ref) {
       GoRoute(
         path: AppRoutes.sepaPayment,
         name: 'sepaPayment',
-        builder: (context, state) =>
-            const _Placeholder(label: 'SePay Payment Screen'),
+        builder: (context, state) {
+          final orderId = state.uri.queryParameters['orderId'] ?? '';
+          return SepayPaymentScreen(orderId: orderId);
+        },
       ),
       GoRoute(
         path: AppRoutes.momoPayment,
