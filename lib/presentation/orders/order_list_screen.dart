@@ -10,7 +10,9 @@ import 'providers/order_providers.dart';
 import 'widgets/cancel_order_dialog.dart';
 import 'widgets/order_card.dart';
 
-/// OrderListScreen — Màn hình danh sách đơn hàng với TabBar lọc theo trạng thái
+/// OrderListScreen — Màn hình danh sách đơn hàng
+/// Sử dụng TabBar + body switch thay vì TabBarView để tránh
+/// lỗi RenderViewport paint null (Flutter known issue).
 class OrderListScreen extends ConsumerStatefulWidget {
   const OrderListScreen({super.key});
 
@@ -35,9 +37,8 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen>
   void initState() {
     super.initState();
     final initialIndex = ref.read(orderFilterIndexProvider);
-    final safeIndex = (initialIndex >= 0 && initialIndex < _tabs.length)
-        ? initialIndex
-        : 0;
+    final safeIndex =
+        (initialIndex >= 0 && initialIndex < _tabs.length) ? initialIndex : 0;
 
     _tabController = TabController(
       length: _tabs.length,
@@ -50,6 +51,7 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen>
         ref
             .read(orderFilterIndexProvider.notifier)
             .setIndex(_tabController.index);
+        setState(() {}); // rebuild body khi tab thay đổi
       }
     });
   }
@@ -92,9 +94,15 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen>
     );
   }
 
+  List<OrderEntity> _filterOrders(List<OrderEntity> orders, String filterKey) {
+    if (filterKey == 'all') return orders;
+    return orders.where((o) => o.status == filterKey).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
     final userOrdersAsync = ref.watch(userOrdersStreamProvider);
+    final currentTab = _tabs[_tabController.index];
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -124,100 +132,63 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen>
           tabs: _tabs.map((t) => Tab(text: t['title'])).toList(),
         ),
       ),
+      // Body: switch nội dung trực tiếp thay vì TabBarView
       body: userOrdersAsync.when(
         loading: () => const _OrderListShimmer(),
         error: (error, stack) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline, size: 48, color: AppColors.error),
-              const SizedBox(height: AppSizes.md),
-              Text(
-                'Lỗi nạp danh sách đơn hàng',
-                style: AppTypography.titleMedium,
-              ),
-              const SizedBox(height: AppSizes.xs),
-              Text(
-                error.toString(),
-                style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary),
-              ),
-            ],
+          child: Padding(
+            padding: const EdgeInsets.all(AppSizes.xxl),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline,
+                    size: 48, color: AppColors.error),
+                const SizedBox(height: AppSizes.md),
+                Text(
+                  'Lỗi nạp danh sách đơn hàng',
+                  style: AppTypography.titleMedium,
+                ),
+                const SizedBox(height: AppSizes.xs),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: AppSizes.lg),
+                  child: Text(
+                    error.toString(),
+                    style: AppTypography.bodySmall
+                        .copyWith(color: AppColors.textSecondary),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
         data: (orders) {
-          return TabBarView(
-            controller: _tabController,
-            children: _tabs.map((tab) {
-              return _OrderListView(
-                key: PageStorageKey('order_tab_${tab['key']}'),
-                orders: orders,
-                filterKey: tab['key']!,
-                filterTitle: tab['title']!,
-                onCancelOrder: (orderId) => _showCancelDialog(context, orderId),
-                onRefresh: () async {
-                  ref.invalidate(userOrdersStreamProvider);
-                },
-              );
-            }).toList(),
-          );
-        },
-      ),
-    );
-  }
-}
+          final filteredOrders =
+              _filterOrders(orders, currentTab['key']!);
 
-// ─── Order Tab View With Keep Alive ──────────────────────────────────────────
-class _OrderListView extends StatefulWidget {
-  final List<OrderEntity> orders;
-  final String filterKey;
-  final String filterTitle;
-  final Function(String orderId) onCancelOrder;
-  final Future<void> Function() onRefresh;
+          if (filteredOrders.isEmpty) {
+            return _OrderEmptyView(filterTitle: currentTab['title']!);
+          }
 
-  const _OrderListView({
-    super.key,
-    required this.orders,
-    required this.filterKey,
-    required this.filterTitle,
-    required this.onCancelOrder,
-    required this.onRefresh,
-  });
-
-  @override
-  State<_OrderListView> createState() => _OrderListViewState();
-}
-
-class _OrderListViewState extends State<_OrderListView>
-    with AutomaticKeepAliveClientMixin {
-  @override
-  bool get wantKeepAlive => true;
-
-  @override
-  Widget build(BuildContext context) {
-    super.build(context);
-
-    final filteredOrders = widget.filterKey == 'all'
-        ? widget.orders
-        : widget.orders.where((o) => o.status == widget.filterKey).toList();
-
-    if (filteredOrders.isEmpty) {
-      return _OrderEmptyView(filterTitle: widget.filterTitle);
-    }
-
-    return RefreshIndicator(
-      color: AppColors.primary,
-      onRefresh: widget.onRefresh,
-      child: ListView.builder(
-        key: PageStorageKey('order_list_${widget.filterKey}'),
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(AppSizes.lg),
-        itemCount: filteredOrders.length,
-        itemBuilder: (context, index) {
-          final order = filteredOrders[index];
-          return OrderCard(
-            key: ValueKey(order.id),
-            order: order,
-            onCancelOrder: () => widget.onCancelOrder(order.id),
+          return RefreshIndicator(
+            color: AppColors.primary,
+            onRefresh: () async {
+              ref.invalidate(userOrdersStreamProvider);
+            },
+            child: ListView.builder(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(AppSizes.lg),
+              itemCount: filteredOrders.length,
+              itemBuilder: (context, index) {
+                final order = filteredOrders[index];
+                return OrderCard(
+                  key: ValueKey(order.id),
+                  order: order,
+                  onCancelOrder: () =>
+                      _showCancelDialog(context, order.id),
+                );
+              },
+            ),
           );
         },
       ),
