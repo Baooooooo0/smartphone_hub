@@ -1,4 +1,16 @@
-const crypto = require("crypto");
+import admin from "firebase-admin";
+
+if (!admin.apps.length) {
+    admin.initializeApp({
+        credential: admin.credential.cert({
+            projectId: process.env.FIREBASE_PROJECT_ID,
+            clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+            privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n"),
+        }),
+    });
+}
+
+const db = admin.firestore();
 
 export default async function handler(req, res) {
     if (req.method !== "POST") {
@@ -9,78 +21,66 @@ export default async function handler(req, res) {
     }
 
     try {
-        const secret = process.env.SEPAY_WEBHOOK_SECRET;
+        const data = req.body;
 
-        if (!secret) {
-            console.error("SEPAY_WEBHOOK_SECRET is not configured");
+        console.log("SePay webhook:", data);
 
-            return res.status(500).json({
+        const {
+            id,
+            transferType,
+            transferAmount,
+            content,
+            code,
+            transactionDate,
+            gateway,
+            referenceCode,
+        } = data;
+
+        if (!id || !transferAmount) {
+            return res.status(400).json({
                 success: false,
-                message: "Webhook secret is not configured",
+                message: "Invalid transaction",
             });
         }
 
-        const signature = req.headers["x-sepay-signature"] || "";
-        const timestamp = req.headers["x-sepay-timestamp"] || "";
-
-        if (!signature || !timestamp) {
-            return res.status(401).json({
-                success: false,
-                message: "Missing SePay signature or timestamp",
+        // Chỉ xử lý tiền vào
+        if (transferType !== "in") {
+            return res.status(200).json({
+                success: true,
+                message: "Ignored outgoing transaction",
             });
         }
 
-        // Payload phải là RAW BODY
-        const payload =
-            typeof req.body === "string"
-                ? req.body
-                : JSON.stringify(req.body);
+        // Dùng ID SePay làm document ID
+        const transactionRef = db
+            .collection("transactions")
+            .doc(String(id));
 
-        // SePay ký: timestamp.raw_body
-        const signedPayload = `${timestamp}.${payload}`;
+        // Chống xử lý trùng
+        const transactionDoc = await transactionRef.get();
 
-        const expected =
-            "sha256=" +
-            crypto
-                .createHmac("sha256", secret)
-                .update(signedPayload)
-                .digest("hex");
-
-        // So sánh an toàn
-        const isValid =
-            signature.length === expected.length &&
-            crypto.timingSafeEqual(
-                Buffer.from(signature),
-                Buffer.from(expected)
-            );
-
-        if (!isValid) {
-            console.warn("Invalid SePay webhook signature");
-
-            return res.status(401).json({
-                success: false,
-                message: "Invalid signature",
+        if (transactionDoc.exists) {
+            return res.status(200).json({
+                success: true,
+                message: "Transaction already processed",
             });
         }
 
-        console.log("========== SEPAY WEBHOOK ==========");
-        console.log(req.body);
-
-        // =================================
-        // ĐẾN ĐÂY WEBHOOK ĐÃ ĐƯỢC XÁC THỰC
-        // =================================
-
-        // TODO:
-        // 1. Kiểm tra loại giao dịch = tiền vào
-        // 2. Kiểm tra số tiền
-        // 3. Kiểm tra nội dung chuyển khoản
-        // 4. Kiểm tra transaction_id đã xử lý chưa
-        // 5. Cập nhật Firestore
-        // 6. Đánh dấu đơn hàng = paid
+        await transactionRef.set({
+            sepayId: String(id),
+            amount: Number(transferAmount),
+            content: content ?? "",
+            code: code ?? null,
+            transferType,
+            transactionDate: transactionDate ?? null,
+            gateway: gateway ?? null,
+            referenceCode: referenceCode ?? null,
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
 
         return res.status(200).json({
             success: true,
-            message: "Webhook received",
+            message: "Transaction saved",
         });
 
     } catch (error) {
