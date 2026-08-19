@@ -21,6 +21,16 @@ abstract class OrderItemModel with _$OrderItemModel {
   factory OrderItemModel.fromJson(Map<String, dynamic> json) =>
       _$OrderItemModelFromJson(json);
 
+  factory OrderItemModel.fromFirestore(Map<String, dynamic> json) =>
+      OrderItemModel(
+        productId: json['productId'] as String? ?? '',
+        productName: json['productName'] as String? ?? '',
+        productImage: json['productImage'] as String? ?? '',
+        color: json['color'] as String? ?? '',
+        price: (json['price'] as num?)?.toDouble() ?? 0.0,
+        quantity: (json['quantity'] as num?)?.toInt() ?? 1,
+      );
+
   const OrderItemModel._();
 
   factory OrderItemModel.fromEntity(OrderItemEntity entity) => OrderItemModel(
@@ -53,6 +63,24 @@ abstract class OrderEventModel with _$OrderEventModel {
 
   factory OrderEventModel.fromJson(Map<String, dynamic> json) =>
       _$OrderEventModelFromJson(json);
+
+  factory OrderEventModel.fromFirestore(Map<String, dynamic> json) {
+    final rawTimestamp = json['timestamp'];
+    DateTime ts;
+    if (rawTimestamp is Timestamp) {
+      ts = rawTimestamp.toDate();
+    } else if (rawTimestamp is String) {
+      ts = DateTime.tryParse(rawTimestamp) ?? DateTime.now();
+    } else {
+      ts = DateTime.now();
+    }
+
+    return OrderEventModel(
+      status: json['status'] as String? ?? 'pending',
+      note: json['note'] as String? ?? '',
+      timestamp: ts,
+    );
+  }
 
   const OrderEventModel._();
 
@@ -105,13 +133,36 @@ abstract class OrderModel with _$OrderModel {
       return null;
     }
 
+    final itemsRaw = data['items'] as List<dynamic>? ?? [];
+    final items = itemsRaw
+        .map((item) {
+          if (item is Map<String, dynamic>) {
+            return OrderItemModel.fromFirestore(item);
+          } else if (item is Map) {
+            return OrderItemModel.fromFirestore(Map<String, dynamic>.from(item));
+          }
+          return null;
+        })
+        .whereType<OrderItemModel>()
+        .toList();
+
+    final timelineRaw = data['timeline'] as List<dynamic>? ?? [];
+    final timeline = timelineRaw
+        .map((e) {
+          if (e is Map<String, dynamic>) {
+            return OrderEventModel.fromFirestore(e);
+          } else if (e is Map) {
+            return OrderEventModel.fromFirestore(Map<String, dynamic>.from(e));
+          }
+          return null;
+        })
+        .whereType<OrderEventModel>()
+        .toList();
+
     return OrderModel(
       id: id,
       userId: data['userId'] as String? ?? '',
-      items: (data['items'] as List<dynamic>?)
-              ?.map((item) => OrderItemModel.fromJson(item as Map<String, dynamic>))
-              .toList() ??
-          [],
+      items: items,
       subtotal: (data['subtotal'] as num?)?.toDouble() ?? 0.0,
       discount: (data['discount'] as num?)?.toDouble() ?? 0.0,
       shippingFee: (data['shippingFee'] as num?)?.toDouble() ?? 0.0,
@@ -128,10 +179,7 @@ abstract class OrderModel with _$OrderModel {
       note: data['note'] as String? ?? '',
       createdAt: parseDateTime(data['createdAt']),
       updatedAt: parseDateTime(data['updatedAt']),
-      timeline: (data['timeline'] as List<dynamic>?)
-              ?.map((e) => OrderEventModel.fromJson(e as Map<String, dynamic>))
-              .toList() ??
-          [],
+      timeline: timeline,
     );
   }
 
