@@ -175,19 +175,19 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen>
             onRefresh: () async {
               ref.invalidate(userOrdersStreamProvider);
             },
-            child: ListView.builder(
+            child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.all(AppSizes.lg),
-              itemCount: filteredOrders.length,
-              itemBuilder: (context, index) {
-                final order = filteredOrders[index];
-                return OrderCard(
-                  key: ValueKey(order.id),
-                  order: order,
-                  onCancelOrder: () =>
-                      _showCancelDialog(context, order.id),
-                );
-              },
+              child: Column(
+                children: filteredOrders.map((order) {
+                  return OrderCard(
+                    key: ValueKey(order.id),
+                    order: order,
+                    onCancelOrder: () =>
+                        _showCancelDialog(context, order.id),
+                  );
+                }).toList(),
+              ),
             ),
           );
         },
@@ -249,23 +249,24 @@ class _OrderListShimmer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListView.builder(
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(AppSizes.lg),
-      itemCount: 4,
-      itemBuilder: (context, index) {
-        return Shimmer.fromColors(
-          baseColor: AppColors.surfaceVariant,
-          highlightColor: AppColors.surface,
-          child: Container(
-            height: 180,
-            margin: const EdgeInsets.only(bottom: AppSizes.md),
-            decoration: BoxDecoration(
-              color: AppColors.surfaceVariant,
-              borderRadius: BorderRadius.circular(AppSizes.radiusLG),
+      child: Column(
+        children: List.generate(4, (index) {
+          return Shimmer.fromColors(
+            baseColor: AppColors.surfaceVariant,
+            highlightColor: AppColors.surface,
+            child: Container(
+              height: 180,
+              margin: const EdgeInsets.only(bottom: AppSizes.md),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceVariant,
+                borderRadius: BorderRadius.circular(AppSizes.radiusLG),
+              ),
             ),
-          ),
-        );
-      },
+          );
+        }),
+      ),
     );
   }
 }

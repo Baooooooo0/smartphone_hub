@@ -133,16 +133,23 @@ class OrderCard extends StatelessWidget {
                       width: 60,
                       height: 60,
                       color: AppColors.background,
-                      child: CachedNetworkImage(
-                        imageUrl: firstItem.productImage,
-                        fit: BoxFit.contain,
-                        placeholder: (context, url) =>
-                            Container(color: Colors.grey.shade100),
-                        errorWidget: (context, url, error) => const Icon(
-                          Icons.phone_android_rounded,
-                          color: AppColors.textTertiary,
-                        ),
-                      ),
+                      child: firstItem.productImage.isNotEmpty
+                          ? CachedNetworkImage(
+                              imageUrl: firstItem.productImage,
+                              fit: BoxFit.contain,
+                              width: 60,
+                              height: 60,
+                              placeholder: (context, url) =>
+                                  Container(color: Colors.grey.shade100),
+                              errorWidget: (context, url, error) => const Icon(
+                                Icons.phone_android_rounded,
+                                color: AppColors.textTertiary,
+                              ),
+                            )
+                          : const Icon(
+                              Icons.phone_android_rounded,
+                              color: AppColors.textTertiary,
+                            ),
                     ),
                   ),
                   const SizedBox(width: AppSizes.md),
