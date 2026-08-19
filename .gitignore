@@ -51,3 +51,5 @@ app.*.map.json
 android/app/google-services.json
 firebase.json
 
+/node_modules/
+
