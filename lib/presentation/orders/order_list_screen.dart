@@ -11,20 +11,12 @@ import 'widgets/cancel_order_dialog.dart';
 import 'widgets/order_card.dart';
 
 /// OrderListScreen — Màn hình danh sách đơn hàng
-/// Sử dụng TabBar + body switch thay vì TabBarView để tránh
-/// lỗi RenderViewport paint null (Flutter known issue).
-class OrderListScreen extends ConsumerStatefulWidget {
+/// Dùng ChoiceChip filter thay vì TabBar/TabBarView để tránh hoàn toàn
+/// các lỗi layout reentrancy và RenderSliverList paint null của Flutter framework.
+class OrderListScreen extends ConsumerWidget {
   const OrderListScreen({super.key});
 
-  @override
-  ConsumerState<OrderListScreen> createState() => _OrderListScreenState();
-}
-
-class _OrderListScreenState extends ConsumerState<OrderListScreen>
-    with SingleTickerProviderStateMixin {
-  late final TabController _tabController;
-
-  static const List<Map<String, String>> _tabs = [
+  static const List<Map<String, String>> _filters = [
     {'title': 'Tất cả', 'key': 'all'},
     {'title': 'Chờ xác nhận', 'key': 'pending'},
     {'title': 'Đã xác nhận', 'key': 'confirmed'},
@@ -34,75 +26,11 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen>
   ];
 
   @override
-  void initState() {
-    super.initState();
-    final initialIndex = ref.read(orderFilterIndexProvider);
-    final safeIndex =
-        (initialIndex >= 0 && initialIndex < _tabs.length) ? initialIndex : 0;
-
-    _tabController = TabController(
-      length: _tabs.length,
-      vsync: this,
-      initialIndex: safeIndex,
-    );
-
-    _tabController.addListener(() {
-      if (!_tabController.indexIsChanging) {
-        ref
-            .read(orderFilterIndexProvider.notifier)
-            .setIndex(_tabController.index);
-        setState(() {}); // rebuild body khi tab thay đổi
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
-  }
-
-  void _showCancelDialog(BuildContext context, String orderId) {
-    showDialog(
-      context: context,
-      builder: (context) => CancelOrderDialog(
-        onConfirm: (reason) async {
-          final success = await ref
-              .read(orderActionProvider.notifier)
-              .cancelOrder(orderId, reason: reason);
-
-          if (context.mounted) {
-            if (success) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('🎉 Đã hủy đơn hàng thành công!'),
-                  backgroundColor: Colors.green,
-                ),
-              );
-            } else {
-              final err = ref.read(orderActionProvider).errorMessage;
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(err ?? 'Không thể hủy đơn hàng.'),
-                  backgroundColor: AppColors.error,
-                ),
-              );
-            }
-          }
-        },
-      ),
-    );
-  }
-
-  List<OrderEntity> _filterOrders(List<OrderEntity> orders, String filterKey) {
-    if (filterKey == 'all') return orders;
-    return orders.where((o) => o.status == filterKey).toList();
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final selectedIndex = ref.watch(orderFilterIndexProvider);
+    final safeIndex = selectedIndex.clamp(0, _filters.length - 1);
+    final currentFilter = _filters[safeIndex];
     final userOrdersAsync = ref.watch(userOrdersStreamProvider);
-    final currentTab = _tabs[_tabController.index];
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -116,81 +44,191 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen>
             fontWeight: FontWeight.w700,
           ),
         ),
-        bottom: TabBar(
-          controller: _tabController,
-          isScrollable: true,
-          labelColor: AppColors.primary,
-          unselectedLabelColor: AppColors.textSecondary,
-          indicatorColor: AppColors.primary,
-          indicatorWeight: 3,
-          labelStyle: AppTypography.titleSmall.copyWith(
-            fontWeight: FontWeight.w700,
-          ),
-          unselectedLabelStyle: AppTypography.titleSmall.copyWith(
-            fontWeight: FontWeight.normal,
-          ),
-          tabs: _tabs.map((t) => Tab(text: t['title'])).toList(),
-        ),
       ),
-      // Body: switch nội dung trực tiếp thay vì TabBarView
-      body: userOrdersAsync.when(
-        loading: () => const _OrderListShimmer(),
-        error: (error, stack) => Center(
-          child: Padding(
-            padding: const EdgeInsets.all(AppSizes.xxl),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.error_outline,
-                    size: 48, color: AppColors.error),
-                const SizedBox(height: AppSizes.md),
-                Text(
-                  'Lỗi nạp danh sách đơn hàng',
-                  style: AppTypography.titleMedium,
-                ),
-                const SizedBox(height: AppSizes.xs),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: AppSizes.lg),
-                  child: Text(
-                    error.toString(),
-                    style: AppTypography.bodySmall
-                        .copyWith(color: AppColors.textSecondary),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        data: (orders) {
-          final filteredOrders =
-              _filterOrders(orders, currentTab['key']!);
-
-          if (filteredOrders.isEmpty) {
-            return _OrderEmptyView(filterTitle: currentTab['title']!);
-          }
-
-          return RefreshIndicator(
-            color: AppColors.primary,
-            onRefresh: () async {
-              ref.invalidate(userOrdersStreamProvider);
-            },
+      body: Column(
+        children: [
+          // ─── Filter Chips ────────────────────────────────────────────
+          Container(
+            color: AppColors.surface,
+            width: double.infinity,
             child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.all(AppSizes.lg),
-              child: Column(
-                children: filteredOrders.map((order) {
-                  return OrderCard(
-                    key: ValueKey(order.id),
-                    order: order,
-                    onCancelOrder: () =>
-                        _showCancelDialog(context, order.id),
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSizes.md,
+                vertical: AppSizes.sm,
+              ),
+              child: Row(
+                children: List.generate(_filters.length, (index) {
+                  final filter = _filters[index];
+                  final isSelected = index == safeIndex;
+                  return Padding(
+                    padding: const EdgeInsets.only(right: AppSizes.xs),
+                    child: ChoiceChip(
+                      label: Text(filter['title']!),
+                      selected: isSelected,
+                      onSelected: (_) {
+                        ref
+                            .read(orderFilterIndexProvider.notifier)
+                            .setIndex(index);
+                      },
+                      selectedColor: AppColors.primary,
+                      backgroundColor: AppColors.background,
+                      labelStyle: TextStyle(
+                        color: isSelected ? Colors.white : AppColors.textSecondary,
+                        fontWeight:
+                            isSelected ? FontWeight.w700 : FontWeight.normal,
+                        fontSize: 13,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius:
+                            BorderRadius.circular(AppSizes.radiusFull),
+                        side: BorderSide(
+                          color: isSelected
+                              ? AppColors.primary
+                              : AppColors.border,
+                        ),
+                      ),
+                      showCheckmark: false,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSizes.sm,
+                        vertical: 0,
+                      ),
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      visualDensity: VisualDensity.compact,
+                    ),
                   );
-                }).toList(),
+                }),
               ),
             ),
-          );
+          ),
+
+          // ─── Divider ────────────────────────────────────────────────
+          const Divider(height: 1, color: AppColors.border),
+
+          // ─── Content ────────────────────────────────────────────────
+          Expanded(
+            child: userOrdersAsync.when(
+              loading: () => const _OrderListShimmer(),
+              error: (error, stack) => _OrderErrorView(error: error),
+              data: (orders) {
+                final filterKey = currentFilter['key']!;
+                final filteredOrders = filterKey == 'all'
+                    ? orders
+                    : orders.where((o) => o.status == filterKey).toList();
+
+                if (filteredOrders.isEmpty) {
+                  return _OrderEmptyView(
+                      filterTitle: currentFilter['title']!);
+                }
+
+                return _OrderListContent(
+                  orders: filteredOrders,
+                  onRefresh: () async {
+                    ref.invalidate(userOrdersStreamProvider);
+                  },
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Danh sách đơn hàng
+class _OrderListContent extends ConsumerWidget {
+  final List<OrderEntity> orders;
+  final Future<void> Function() onRefresh;
+
+  const _OrderListContent({
+    required this.orders,
+    required this.onRefresh,
+  });
+
+  void _showCancelDialog(BuildContext context, WidgetRef ref, String orderId) {
+    showDialog(
+      context: context,
+      builder: (ctx) => CancelOrderDialog(
+        onConfirm: (reason) async {
+          final success = await ref
+              .read(orderActionProvider.notifier)
+              .cancelOrder(orderId, reason: reason);
+
+          if (ctx.mounted) {
+            if (success) {
+              ScaffoldMessenger.of(ctx).showSnackBar(
+                const SnackBar(
+                  content: Text('🎉 Đã hủy đơn hàng thành công!'),
+                  backgroundColor: Colors.green,
+                ),
+              );
+            } else {
+              final err = ref.read(orderActionProvider).errorMessage;
+              ScaffoldMessenger.of(ctx).showSnackBar(
+                SnackBar(
+                  content: Text(err ?? 'Không thể hủy đơn hàng.'),
+                  backgroundColor: AppColors.error,
+                ),
+              );
+            }
+          }
         },
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return RefreshIndicator(
+      color: AppColors.primary,
+      onRefresh: onRefresh,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(AppSizes.lg),
+        child: Column(
+          children: orders.map((order) {
+            return OrderCard(
+              key: ValueKey(order.id),
+              order: order,
+              onCancelOrder: () =>
+                  _showCancelDialog(context, ref, order.id),
+            );
+          }).toList(),
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Error View ───────────────────────────────────────────────────────────────
+class _OrderErrorView extends StatelessWidget {
+  final Object error;
+  const _OrderErrorView({required this.error});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSizes.xxl),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, size: 48, color: AppColors.error),
+            const SizedBox(height: AppSizes.md),
+            Text(
+              'Lỗi nạp danh sách đơn hàng',
+              style: AppTypography.titleMedium,
+            ),
+            const SizedBox(height: AppSizes.xs),
+            Text(
+              error.toString(),
+              style: AppTypography.bodySmall
+                  .copyWith(color: AppColors.textSecondary),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
       ),
     );
   }
