@@ -10,6 +10,7 @@ import '../../../core/utils/helpers.dart';
 import '../../../domain/entities/order_entity.dart';
 
 /// OrderCard — Widget hiển thị thông tin vắn tắt đơn hàng trong danh sách
+/// Được chia nhỏ thành 3 phần: Header, Item Preview, và Footer.
 class OrderCard extends StatelessWidget {
   final OrderEntity order;
   final VoidCallback? onCancelOrder;
@@ -58,11 +59,14 @@ class OrderCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final firstItem = order.items.firstOrNull;
     final extraItemsCount = order.items.length - 1;
+
     final formattedDate = order.createdAt != null
         ? DateFormat('dd/MM/yyyy HH:mm').format(order.createdAt!)
         : '';
 
     return Container(
+      margin: const EdgeInsets.only(bottom: AppSizes.md),
+      padding: const EdgeInsets.all(AppSizes.lg),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppSizes.radiusLG),
@@ -75,205 +79,333 @@ class OrderCard extends StatelessWidget {
           ),
         ],
       ),
-      margin: const EdgeInsets.only(bottom: AppSizes.md),
-      padding: const EdgeInsets.all(AppSizes.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ─── Header: Mã đơn + Ngày tạo + Badge Trạng thái ──────────────────
-          Row(
-            children: [
-              Text(
-                '#${order.id.length > 8 ? order.id.substring(0, 8).toUpperCase() : order.id}',
-                style: AppTypography.titleSmall.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              const SizedBox(width: AppSizes.xs),
-              Text(
-                formattedDate,
-                style: AppTypography.labelSmall.copyWith(
-                  color: AppColors.textSecondary,
-                  fontSize: 11,
-                ),
-              ),
-              const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSizes.xs + 2,
-                  vertical: 3,
-                ),
-                decoration: BoxDecoration(
-                  color: _statusColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(AppSizes.radiusXS),
-                ),
-                child: Text(
-                  _statusText,
-                  style: AppTypography.labelSmall.copyWith(
-                    color: _statusColor,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 11,
-                  ),
-                ),
-              ),
-            ],
+          // ─── Header ─────────────────────────────────────────────────────
+          _OrderCardHeader(
+            orderId: order.id,
+            formattedDate: formattedDate,
+            statusColor: _statusColor,
+            statusText: _statusText,
           ),
-          const Divider(height: AppSizes.lg, color: AppColors.border),
 
-          // ─── Body: Sản phẩm xem trước ─────────────────────────────────────
-          if (firstItem != null)
-            GestureDetector(
-              onTap: () => context.push('/orders/${order.id}'),
-              child: Row(
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(AppSizes.radiusSM),
-                    child: Container(
+          const Divider(
+            height: AppSizes.lg,
+            color: AppColors.border,
+          ),
+
+          // ─── Body: Sản phẩm xem trước ────────────────────────────────────
+          if (firstItem != null) ...[
+            _OrderCardPreviewItem(
+              orderId: order.id,
+              item: firstItem,
+              extraItemsCount: extraItemsCount,
+            ),
+            const Divider(
+              height: AppSizes.lg,
+              color: AppColors.border,
+            ),
+          ],
+
+          // ─── Footer ──────────────────────────────────────────────────────
+          _OrderCardFooter(
+            order: order,
+            onCancelOrder: onCancelOrder,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Sub-widget 1: Header ───────────────────────────────────────────────────
+
+class _OrderCardHeader extends StatelessWidget {
+  final String orderId;
+  final String formattedDate;
+  final Color statusColor;
+  final String statusText;
+
+  const _OrderCardHeader({
+    required this.orderId,
+    required this.formattedDate,
+    required this.statusColor,
+    required this.statusText,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final displayId = orderId.length > 8
+        ? orderId.substring(0, 8).toUpperCase()
+        : orderId;
+
+    return Row(
+      children: [
+        Text(
+          '#$displayId',
+          style: AppTypography.titleSmall.copyWith(
+            fontWeight: FontWeight.w700,
+            color: AppColors.textPrimary,
+          ),
+        ),
+
+        if (formattedDate.isNotEmpty) ...[
+          const SizedBox(width: AppSizes.xs),
+          Text(
+            formattedDate,
+            style: AppTypography.labelSmall.copyWith(
+              color: AppColors.textSecondary,
+              fontSize: 11,
+            ),
+          ),
+        ],
+
+        const Spacer(),
+
+        Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSizes.xs + 2,
+            vertical: 3,
+          ),
+          decoration: BoxDecoration(
+            color: statusColor.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(AppSizes.radiusXS),
+          ),
+          child: Text(
+            statusText,
+            style: AppTypography.labelSmall.copyWith(
+              color: statusColor,
+              fontWeight: FontWeight.w700,
+              fontSize: 11,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ─── Sub-widget 2: Item Preview ─────────────────────────────────────────────
+
+class _OrderCardPreviewItem extends StatelessWidget {
+  final String orderId;
+  final OrderItemEntity item;
+  final int extraItemsCount;
+
+  const _OrderCardPreviewItem({
+    required this.orderId,
+    required this.item,
+    required this.extraItemsCount,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => context.push('/orders/$orderId'),
+      behavior: HitTestBehavior.opaque,
+      child: Row(
+        children: [
+          // Product image
+          ClipRRect(
+            borderRadius: BorderRadius.circular(AppSizes.radiusSM),
+            child: Container(
+              width: 60,
+              height: 60,
+              color: AppColors.background,
+              child: item.productImage.isNotEmpty
+                  ? CachedNetworkImage(
+                      imageUrl: item.productImage,
+                      fit: BoxFit.contain,
                       width: 60,
                       height: 60,
-                      color: AppColors.background,
-                      child: firstItem.productImage.isNotEmpty
-                          ? CachedNetworkImage(
-                              imageUrl: firstItem.productImage,
-                              fit: BoxFit.contain,
-                              width: 60,
-                              height: 60,
-                              placeholder: (context, url) =>
-                                  Container(color: Colors.grey.shade100),
-                              errorWidget: (context, url, error) => const Icon(
-                                Icons.phone_android_rounded,
-                                color: AppColors.textTertiary,
-                              ),
-                            )
-                          : const Icon(
-                              Icons.phone_android_rounded,
-                              color: AppColors.textTertiary,
-                            ),
+                      placeholder: (context, url) => Container(
+                        color: Colors.grey.shade100,
+                      ),
+                      errorWidget: (context, url, error) {
+                        return const Icon(
+                          Icons.phone_android_rounded,
+                          color: AppColors.textTertiary,
+                        );
+                      },
+                    )
+                  : const Icon(
+                      Icons.phone_android_rounded,
+                      color: AppColors.textTertiary,
                     ),
+            ),
+          ),
+
+          const SizedBox(width: AppSizes.md),
+
+          // Product information
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item.productName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.titleSmall.copyWith(
+                    fontWeight: FontWeight.w600,
                   ),
-                  const SizedBox(width: AppSizes.md),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          firstItem.productName,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: AppTypography.titleSmall.copyWith(
-                            fontWeight: FontWeight.w600,
+                ),
+
+                const SizedBox(height: 2),
+
+                Row(
+                  children: [
+                    if (item.color.isNotEmpty) ...[
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 1,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.background,
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(
+                            color: AppColors.border,
                           ),
                         ),
-                        const SizedBox(height: 2),
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 6, vertical: 1),
-                              decoration: BoxDecoration(
-                                color: AppColors.background,
-                                borderRadius: BorderRadius.circular(4),
-                                border: Border.all(color: AppColors.border),
-                              ),
-                              child: Text(
-                                firstItem.color,
-                                style: AppTypography.labelSmall.copyWith(
-                                  color: AppColors.textSecondary,
-                                  fontSize: 10,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: AppSizes.xs),
-                            Text(
-                              'x${firstItem.quantity}',
-                              style: AppTypography.labelSmall.copyWith(
-                                color: AppColors.textSecondary,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ],
-                        ),
-                        if (extraItemsCount > 0) ...[
-                          const SizedBox(height: 4),
-                          Text(
-                            '+ $extraItemsCount sản phẩm khác',
-                            style: AppTypography.labelSmall.copyWith(
-                              color: AppColors.primary,
-                              fontWeight: FontWeight.w600,
-                            ),
+                        child: Text(
+                          item.color,
+                          style: AppTypography.labelSmall.copyWith(
+                            color: AppColors.textSecondary,
+                            fontSize: 10,
                           ),
-                        ],
-                      ],
+                        ),
+                      ),
+
+                      const SizedBox(width: AppSizes.xs),
+                    ],
+
+                    Text(
+                      'x${item.quantity}',
+                      style: AppTypography.labelSmall.copyWith(
+                        color: AppColors.textSecondary,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: AppSizes.xs),
+                  ],
+                ),
+
+                if (extraItemsCount > 0) ...[
+                  const SizedBox(height: 4),
+
                   Text(
-                    CurrencyFormatter.format(firstItem.totalPrice),
-                    style: AppTypography.bodyMedium.copyWith(
+                    '+ $extraItemsCount sản phẩm khác',
+                    style: AppTypography.labelSmall.copyWith(
+                      color: AppColors.primary,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                 ],
-              ),
+              ],
             ),
-          const Divider(height: AppSizes.lg, color: AppColors.border),
+          ),
 
-          // ─── Footer: Tổng thanh toán + Actions ────────────────────────────
-          Row(
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Tổng thanh toán (${order.items.fold(0, (sum, i) => sum + i.quantity)} SP):',
-                    style: AppTypography.labelSmall.copyWith(
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    CurrencyFormatter.format(order.total),
-                    style: AppTypography.titleMedium.copyWith(
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ],
-              ),
-              const Spacer(),
-              if (order.isPending && onCancelOrder != null)
-                OutlinedButton(
-                  onPressed: onCancelOrder,
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.error,
-                    side: const BorderSide(color: AppColors.error),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSizes.md,
-                      vertical: AppSizes.xs,
-                    ),
-                    visualDensity: VisualDensity.compact,
-                  ),
-                  child: const Text('Hủy đơn'),
-                ),
-              if (order.isPending && onCancelOrder != null)
-                const SizedBox(width: AppSizes.xs),
-              ElevatedButton(
-                onPressed: () => context.push('/orders/${order.id}'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSizes.md,
-                    vertical: AppSizes.xs,
-                  ),
-                  visualDensity: VisualDensity.compact,
-                ),
-                child: const Text('Chi tiết', style: TextStyle(color: Colors.white)),
-              ),
-            ],
+          const SizedBox(width: AppSizes.xs),
+
+          // Item price
+          Text(
+            CurrencyFormatter.format(item.totalPrice),
+            style: AppTypography.bodyMedium.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ],
       ),
+    );
+  }
+}
+
+// ─── Sub-widget 3: Footer ───────────────────────────────────────────────────
+
+class _OrderCardFooter extends StatelessWidget {
+  final OrderEntity order;
+  final VoidCallback? onCancelOrder;
+
+  const _OrderCardFooter({
+    required this.order,
+    this.onCancelOrder,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final totalQuantity = order.items.fold(
+      0,
+      (sum, item) => sum + item.quantity,
+    );
+
+    return Row(
+      children: [
+        // ─── Total ─────────────────────────────────────────────────────────
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Tổng thanh toán ($totalQuantity SP):',
+              style: AppTypography.labelSmall.copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              CurrencyFormatter.format(order.total),
+              style: AppTypography.titleMedium.copyWith(
+                color: AppColors.primary,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ],
+        ),
+
+        const Spacer(),
+
+        // ─── Actions ──────────────────────────────────────────────────────
+        if (order.isPending && onCancelOrder != null) ...[
+          OutlinedButton(
+            onPressed: onCancelOrder,
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.error,
+              side: const BorderSide(
+                color: AppColors.error,
+              ),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSizes.md,
+                vertical: AppSizes.xs,
+              ),
+              minimumSize: const Size(0, 32),
+              visualDensity: VisualDensity.compact,
+            ),
+            child: const Text('Hủy đơn'),
+          ),
+          const SizedBox(width: AppSizes.xs),
+        ],
+
+        ElevatedButton(
+          onPressed: () {
+            context.push('/orders/${order.id}');
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.primary,
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSizes.md,
+              vertical: AppSizes.xs,
+            ),
+            minimumSize: const Size(0, 32),
+            visualDensity: VisualDensity.compact,
+          ),
+          child: const Text(
+            'Chi tiết',
+            style: TextStyle(
+              color: Colors.white,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

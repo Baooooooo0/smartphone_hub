@@ -10,28 +10,45 @@ import 'providers/order_providers.dart';
 import 'widgets/cancel_order_dialog.dart';
 import 'widgets/order_card.dart';
 
-/// OrderListScreen — Màn hình danh sách đơn hàng
-/// Dùng ChoiceChip filter thay vì TabBar/TabBarView để tránh hoàn toàn
-/// các lỗi layout reentrancy và RenderSliverList paint null của Flutter framework.
+// ═══════════════════════════════════════════════════════════════════════════════
+// ⚠️ QUAN TRỌNG — QUY TẮC RENDER AN TOÀN:
+//
+// 1. KHÔNG dùng: TabBar, TabBarView, ListView, GridView, RefreshIndicator
+// 2. LUÔN dùng: SingleChildScrollView + Column
+// 3. Widget tree bên trong Expanded KHÔNG ĐƯỢC thay đổi kiểu widget
+//    (không dùng .when() trả về widget khác nhau → gây RenderTransform crash)
+// 4. Chỉ thay đổi children bên trong Column, giữ nguyên cấu trúc bao ngoài
+//
+// Chi tiết: xem AGENT.md mục 15 "Known Bugs & Workarounds"
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/// Các bộ lọc trạng thái đơn hàng
+const _orderFilters = [
+  ('Tất cả', 'all'),
+  ('Chờ xác nhận', 'pending'),
+  ('Đã xác nhận', 'confirmed'),
+  ('Đang giao', 'shipping'),
+  ('Đã giao', 'delivered'),
+  ('Đã hủy', 'cancelled'),
+];
+
+/// Màn hình danh sách đơn hàng.
+///
+/// Widget tree LUÔN ổn định:
+/// ```
+/// Scaffold
+///  └─ Column
+///       ├─ _FilterChipsBar
+///       ├─ Divider
+///       └─ Expanded
+///            └─ SingleChildScrollView   ← LUÔN có, KHÔNG BAO GIỜ swap
+///                 └─ Column             ← children thay đổi, widget không đổi
+/// ```
 class OrderListScreen extends ConsumerWidget {
   const OrderListScreen({super.key});
 
-  static const List<Map<String, String>> _filters = [
-    {'title': 'Tất cả', 'key': 'all'},
-    {'title': 'Chờ xác nhận', 'key': 'pending'},
-    {'title': 'Đã xác nhận', 'key': 'confirmed'},
-    {'title': 'Đang giao', 'key': 'shipping'},
-    {'title': 'Đã giao', 'key': 'delivered'},
-    {'title': 'Đã hủy', 'key': 'cancelled'},
-  ];
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final selectedIndex = ref.watch(orderFilterIndexProvider);
-    final safeIndex = selectedIndex.clamp(0, _filters.length - 1);
-    final currentFilter = _filters[safeIndex];
-    final userOrdersAsync = ref.watch(userOrdersStreamProvider);
-
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -45,106 +62,212 @@ class OrderListScreen extends ConsumerWidget {
           ),
         ),
       ),
-      body: Column(
+      body: const Column(
         children: [
-          // ─── Filter Chips ────────────────────────────────────────────
-          Container(
-            color: AppColors.surface,
-            width: double.infinity,
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSizes.md,
-                vertical: AppSizes.sm,
-              ),
-              child: Row(
-                children: List.generate(_filters.length, (index) {
-                  final filter = _filters[index];
-                  final isSelected = index == safeIndex;
-                  return Padding(
-                    padding: const EdgeInsets.only(right: AppSizes.xs),
-                    child: ChoiceChip(
-                      label: Text(filter['title']!),
-                      selected: isSelected,
-                      onSelected: (_) {
-                        ref
-                            .read(orderFilterIndexProvider.notifier)
-                            .setIndex(index);
-                      },
-                      selectedColor: AppColors.primary,
-                      backgroundColor: AppColors.background,
-                      labelStyle: TextStyle(
-                        color: isSelected ? Colors.white : AppColors.textSecondary,
-                        fontWeight:
-                            isSelected ? FontWeight.w700 : FontWeight.normal,
-                        fontSize: 13,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius:
-                            BorderRadius.circular(AppSizes.radiusFull),
-                        side: BorderSide(
-                          color: isSelected
-                              ? AppColors.primary
-                              : AppColors.border,
-                        ),
-                      ),
-                      showCheckmark: false,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSizes.sm,
-                        vertical: 0,
-                      ),
-                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      visualDensity: VisualDensity.compact,
-                    ),
-                  );
-                }),
-              ),
-            ),
-          ),
-
-          // ─── Divider ────────────────────────────────────────────────
-          const Divider(height: 1, color: AppColors.border),
-
-          // ─── Content ────────────────────────────────────────────────
-          Expanded(
-            child: userOrdersAsync.when(
-              loading: () => const _OrderListShimmer(),
-              error: (error, stack) => _OrderErrorView(error: error),
-              data: (orders) {
-                final filterKey = currentFilter['key']!;
-                final filteredOrders = filterKey == 'all'
-                    ? orders
-                    : orders.where((o) => o.status == filterKey).toList();
-
-                if (filteredOrders.isEmpty) {
-                  return _OrderEmptyView(
-                      filterTitle: currentFilter['title']!);
-                }
-
-                return _OrderListContent(
-                  orders: filteredOrders,
-                  onRefresh: () async {
-                    ref.invalidate(userOrdersStreamProvider);
-                  },
-                );
-              },
-            ),
-          ),
+          _FilterChipsBar(),
+          Divider(height: 1, color: AppColors.border),
+          Expanded(child: _StableOrderContent()),
         ],
       ),
     );
   }
 }
 
-/// Danh sách đơn hàng
-class _OrderListContent extends ConsumerWidget {
-  final List<OrderEntity> orders;
-  final Future<void> Function() onRefresh;
+// ─── Filter Chips Bar ─────────────────────────────────────────────────────────
+class _FilterChipsBar extends ConsumerWidget {
+  const _FilterChipsBar();
 
-  const _OrderListContent({
-    required this.orders,
-    required this.onRefresh,
-  });
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final selectedIndex = ref.watch(orderFilterIndexProvider);
+
+    return Container(
+      color: AppColors.surface,
+      width: double.infinity,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSizes.md,
+          vertical: AppSizes.sm,
+        ),
+        child: Row(
+          children: [
+            for (int i = 0; i < _orderFilters.length; i++)
+              Padding(
+                padding: const EdgeInsets.only(right: AppSizes.xs),
+                child: ChoiceChip(
+                  label: Text(_orderFilters[i].$1),
+                  selected: i == selectedIndex,
+                  onSelected: (_) {
+                    ref.read(orderFilterIndexProvider.notifier).setIndex(i);
+                  },
+                  selectedColor: AppColors.primary,
+                  backgroundColor: AppColors.background,
+                  labelStyle: TextStyle(
+                    color: i == selectedIndex
+                        ? Colors.white
+                        : AppColors.textSecondary,
+                    fontWeight: i == selectedIndex
+                        ? FontWeight.w700
+                        : FontWeight.normal,
+                    fontSize: 13,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppSizes.radiusFull),
+                    side: BorderSide(
+                      color: i == selectedIndex
+                          ? AppColors.primary
+                          : AppColors.border,
+                    ),
+                  ),
+                  showCheckmark: false,
+                  padding: const EdgeInsets.symmetric(horizontal: AppSizes.sm),
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  visualDensity: VisualDensity.compact,
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Stable Order Content ─────────────────────────────────────────────────────
+/// Widget này LUÔN render cùng 1 SingleChildScrollView + Column.
+/// Chỉ children bên trong Column thay đổi, widget bao ngoài KHÔNG ĐỔI.
+/// Đây là cách duy nhất tránh RenderTransform hasSize crash.
+class _StableOrderContent extends ConsumerWidget {
+  const _StableOrderContent();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final ordersAsync = ref.watch(userOrdersStreamProvider);
+    final selectedIndex = ref.watch(orderFilterIndexProvider);
+    final safeIdx = selectedIndex.clamp(0, _orderFilters.length - 1);
+    final filterKey = _orderFilters[safeIdx].$2;
+    final filterTitle = _orderFilters[safeIdx].$1;
+
+    // Tạo danh sách children cho Column — KHÔNG swap widget type
+    final List<Widget> children = _buildColumnChildren(
+      ordersAsync: ordersAsync,
+      filterKey: filterKey,
+      filterTitle: filterTitle,
+      context: context,
+      ref: ref,
+    );
+
+    // ⚠️ Widget tree LUÔN là: SingleChildScrollView → Column
+    // Chỉ Column.children thay đổi — widget bao ngoài giữ nguyên
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(AppSizes.lg),
+      child: Column(
+        children: children,
+      ),
+    );
+  }
+
+  List<Widget> _buildColumnChildren({
+    required AsyncValue<List<OrderEntity>> ordersAsync,
+    required String filterKey,
+    required String filterTitle,
+    required BuildContext context,
+    required WidgetRef ref,
+  }) {
+    // ── Loading state ──
+    if (ordersAsync.isLoading && !ordersAsync.hasValue) {
+      return List.generate(
+        4,
+        (i) => Shimmer.fromColors(
+          baseColor: AppColors.surfaceVariant,
+          highlightColor: AppColors.surface,
+          child: Container(
+            height: 160,
+            margin: const EdgeInsets.only(bottom: AppSizes.md),
+            decoration: BoxDecoration(
+              color: AppColors.surfaceVariant,
+              borderRadius: BorderRadius.circular(AppSizes.radiusLG),
+            ),
+          ),
+        ),
+      );
+    }
+
+    // ── Error state ──
+    if (ordersAsync.hasError && !ordersAsync.hasValue) {
+      return [
+        const SizedBox(height: 100),
+        const Icon(Icons.error_outline, size: 48, color: AppColors.error),
+        const SizedBox(height: AppSizes.md),
+        Text('Lỗi nạp danh sách đơn hàng',
+            style: AppTypography.titleMedium),
+        const SizedBox(height: AppSizes.xs),
+        Text(
+          ordersAsync.error.toString(),
+          style: AppTypography.bodySmall
+              .copyWith(color: AppColors.textSecondary),
+          textAlign: TextAlign.center,
+        ),
+      ];
+    }
+
+    // ── Data state ──
+    final allOrders = ordersAsync.value ?? [];
+    final orders = filterKey == 'all'
+        ? allOrders
+        : allOrders.where((o) => o.status == filterKey).toList();
+
+    if (orders.isEmpty) {
+      return [
+        const SizedBox(height: 80),
+        Container(
+          padding: const EdgeInsets.all(AppSizes.lg),
+          decoration: const BoxDecoration(
+            color: AppColors.primarySurface,
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(
+            Icons.receipt_long_outlined,
+            size: 56,
+            color: AppColors.primary,
+          ),
+        ),
+        const SizedBox(height: AppSizes.lg),
+        Text(
+          'Chưa có đơn hàng nào',
+          style:
+              AppTypography.titleLarge.copyWith(fontWeight: FontWeight.w700),
+        ),
+        const SizedBox(height: AppSizes.xs),
+        Text(
+          'Bạn chưa có đơn hàng nào ở mục "$filterTitle".',
+          style: AppTypography.bodyMedium
+              .copyWith(color: AppColors.textSecondary),
+          textAlign: TextAlign.center,
+        ),
+      ];
+    }
+
+    // ── Danh sách đơn hàng ──
+    return [
+      for (final order in orders)
+        _OrderCardWrapper(key: ValueKey(order.id), order: order),
+    ];
+  }
+}
+
+// ─── OrderCard Wrapper ────────────────────────────────────────────────────────
+class _OrderCardWrapper extends ConsumerWidget {
+  final OrderEntity order;
+  const _OrderCardWrapper({super.key, required this.order});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return OrderCard(
+      order: order,
+      onCancelOrder: () => _showCancelDialog(context, ref, order.id),
+    );
+  }
 
   void _showCancelDialog(BuildContext context, WidgetRef ref, String orderId) {
     showDialog(
@@ -156,154 +279,19 @@ class _OrderListContent extends ConsumerWidget {
               .cancelOrder(orderId, reason: reason);
 
           if (ctx.mounted) {
-            if (success) {
-              ScaffoldMessenger.of(ctx).showSnackBar(
-                const SnackBar(
-                  content: Text('🎉 Đã hủy đơn hàng thành công!'),
-                  backgroundColor: Colors.green,
+            ScaffoldMessenger.of(ctx).showSnackBar(
+              SnackBar(
+                content: Text(
+                  success
+                      ? '🎉 Đã hủy đơn hàng thành công!'
+                      : ref.read(orderActionProvider).errorMessage ??
+                          'Không thể hủy đơn hàng.',
                 ),
-              );
-            } else {
-              final err = ref.read(orderActionProvider).errorMessage;
-              ScaffoldMessenger.of(ctx).showSnackBar(
-                SnackBar(
-                  content: Text(err ?? 'Không thể hủy đơn hàng.'),
-                  backgroundColor: AppColors.error,
-                ),
-              );
-            }
+                backgroundColor: success ? Colors.green : AppColors.error,
+              ),
+            );
           }
         },
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return RefreshIndicator(
-      color: AppColors.primary,
-      onRefresh: onRefresh,
-      child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(AppSizes.lg),
-        child: Column(
-          children: orders.map((order) {
-            return OrderCard(
-              key: ValueKey(order.id),
-              order: order,
-              onCancelOrder: () =>
-                  _showCancelDialog(context, ref, order.id),
-            );
-          }).toList(),
-        ),
-      ),
-    );
-  }
-}
-
-// ─── Error View ───────────────────────────────────────────────────────────────
-class _OrderErrorView extends StatelessWidget {
-  final Object error;
-  const _OrderErrorView({required this.error});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSizes.xxl),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.error_outline, size: 48, color: AppColors.error),
-            const SizedBox(height: AppSizes.md),
-            Text(
-              'Lỗi nạp danh sách đơn hàng',
-              style: AppTypography.titleMedium,
-            ),
-            const SizedBox(height: AppSizes.xs),
-            Text(
-              error.toString(),
-              style: AppTypography.bodySmall
-                  .copyWith(color: AppColors.textSecondary),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ─── Empty View ───────────────────────────────────────────────────────────────
-class _OrderEmptyView extends StatelessWidget {
-  final String filterTitle;
-  const _OrderEmptyView({required this.filterTitle});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSizes.xxl),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(AppSizes.lg),
-              decoration: const BoxDecoration(
-                color: AppColors.primarySurface,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.receipt_long_outlined,
-                size: 56,
-                color: AppColors.primary,
-              ),
-            ),
-            const SizedBox(height: AppSizes.lg),
-            Text(
-              'Chưa có đơn hàng nào',
-              style: AppTypography.titleLarge.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: AppSizes.xs),
-            Text(
-              'Bạn chưa có đơn hàng nào ở mục "$filterTitle".',
-              style: AppTypography.bodyMedium.copyWith(
-                color: AppColors.textSecondary,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ─── Shimmer Loading ──────────────────────────────────────────────────────────
-class _OrderListShimmer extends StatelessWidget {
-  const _OrderListShimmer();
-
-  @override
-  Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(AppSizes.lg),
-      child: Column(
-        children: List.generate(4, (index) {
-          return Shimmer.fromColors(
-            baseColor: AppColors.surfaceVariant,
-            highlightColor: AppColors.surface,
-            child: Container(
-              height: 180,
-              margin: const EdgeInsets.only(bottom: AppSizes.md),
-              decoration: BoxDecoration(
-                color: AppColors.surfaceVariant,
-                borderRadius: BorderRadius.circular(AppSizes.radiusLG),
-              ),
-            ),
-          );
-        }),
       ),
     );
   }
