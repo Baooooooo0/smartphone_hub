@@ -8,6 +8,7 @@ import '../../../core/constants/app_sizes.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/helpers.dart';
 import '../../../domain/entities/order_entity.dart';
+import 'order_auto_cancel_timer.dart';
 
 /// OrderCard — Widget hiển thị thông tin vắn tắt đơn hàng trong danh sách
 /// Được chia nhỏ thành 3 phần: Header, Item Preview, và Footer.
@@ -88,6 +89,8 @@ class OrderCard extends StatelessWidget {
             formattedDate: formattedDate,
             statusColor: _statusColor,
             statusText: _statusText,
+            isPending: order.isPending,
+            createdAt: order.createdAt,
           ),
 
           const Divider(
@@ -126,12 +129,16 @@ class _OrderCardHeader extends StatelessWidget {
   final String formattedDate;
   final Color statusColor;
   final String statusText;
+  final bool isPending;
+  final DateTime? createdAt;
 
   const _OrderCardHeader({
     required this.orderId,
     required this.formattedDate,
     required this.statusColor,
     required this.statusText,
+    required this.isPending,
+    this.createdAt,
   });
 
   @override
@@ -140,47 +147,59 @@ class _OrderCardHeader extends StatelessWidget {
         ? orderId.substring(0, 8).toUpperCase()
         : orderId;
 
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          '#$displayId',
-          style: AppTypography.titleSmall.copyWith(
-            fontWeight: FontWeight.w700,
-            color: AppColors.textPrimary,
-          ),
-        ),
-
-        if (formattedDate.isNotEmpty) ...[
-          const SizedBox(width: AppSizes.xs),
-          Text(
-            formattedDate,
-            style: AppTypography.labelSmall.copyWith(
-              color: AppColors.textSecondary,
-              fontSize: 11,
+        Row(
+          children: [
+            Text(
+              '#$displayId',
+              style: AppTypography.titleSmall.copyWith(
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary,
+              ),
             ),
+
+            if (formattedDate.isNotEmpty) ...[
+              const SizedBox(width: AppSizes.xs),
+              Text(
+                formattedDate,
+                style: AppTypography.labelSmall.copyWith(
+                  color: AppColors.textSecondary,
+                  fontSize: 11,
+                ),
+              ),
+            ],
+
+            const Spacer(),
+
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSizes.xs + 2,
+                vertical: 3,
+              ),
+              decoration: BoxDecoration(
+                color: statusColor.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(AppSizes.radiusXS),
+              ),
+              child: Text(
+                statusText,
+                style: AppTypography.labelSmall.copyWith(
+                  color: statusColor,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 11,
+                ),
+              ),
+            ),
+          ],
+        ),
+        if (isPending && createdAt != null) ...[
+          const SizedBox(height: AppSizes.xs),
+          OrderAutoCancelTimer(
+            orderId: orderId,
+            createdAt: createdAt,
           ),
         ],
-
-        const Spacer(),
-
-        Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSizes.xs + 2,
-            vertical: 3,
-          ),
-          decoration: BoxDecoration(
-            color: statusColor.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(AppSizes.radiusXS),
-          ),
-          child: Text(
-            statusText,
-            style: AppTypography.labelSmall.copyWith(
-              color: statusColor,
-              fontWeight: FontWeight.w700,
-              fontSize: 11,
-            ),
-          ),
-        ),
       ],
     );
   }

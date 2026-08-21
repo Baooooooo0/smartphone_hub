@@ -13,6 +13,7 @@ import '../../router/app_router.dart';
 import '../widgets/primary_button.dart';
 import 'providers/order_providers.dart';
 import 'widgets/cancel_order_dialog.dart';
+import 'widgets/order_auto_cancel_timer.dart';
 import 'widgets/order_timeline_widget.dart';
 
 /// OrderDetailScreen — Màn hình chi tiết đơn hàng
@@ -115,6 +116,14 @@ class OrderDetailScreen extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Banner đếm ngược tự hủy 15 phút nếu đơn đang chờ xác nhận
+                    if (order.isPending && order.createdAt != null)
+                      OrderAutoCancelTimer(
+                        orderId: order.id,
+                        createdAt: order.createdAt,
+                        isBanner: true,
+                      ),
+
                     // 1. Mã đơn hàng & Ngày khởi tạo Card
                     Container(
                       padding: const EdgeInsets.all(AppSizes.lg),

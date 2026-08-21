@@ -48,7 +48,17 @@ class OrderRemoteDataSource {
     return _ordersRef.doc(orderId).snapshots().map((doc) {
       if (!doc.exists || doc.data() == null) return null;
       try {
-        return OrderModel.fromFirestore(doc.data()!, doc.id);
+        final order = OrderModel.fromFirestore(doc.data()!, doc.id);
+        // Tự động hủy nếu đơn pending quá 15 phút
+        if (order.status == 'pending' && order.createdAt != null) {
+          if (DateTime.now().difference(order.createdAt!).inSeconds >= 15 * 60) {
+            cancelOrder(
+              order.id,
+              reason: 'Hệ thống tự động hủy do quá thời gian chờ xác nhận (15 phút)',
+            );
+          }
+        }
+        return order;
       } catch (e) {
         return null;
       }
@@ -71,6 +81,20 @@ class OrderRemoteDataSource {
           })
           .whereType<OrderModel>()
           .toList();
+
+      // Kiểm tra và tự động hủy các đơn hàng pending quá 15 phút
+      final now = DateTime.now();
+      for (final order in orders) {
+        if (order.status == 'pending' && order.createdAt != null) {
+          if (now.difference(order.createdAt!).inSeconds >= 15 * 60) {
+            cancelOrder(
+              order.id,
+              reason: 'Hệ thống tự động hủy do quá thời gian chờ xác nhận (15 phút)',
+            );
+          }
+        }
+      }
+
       // Sắp xếp đơn hàng mới nhất lên đầu trong bộ nhớ (tránh lỗi require composite index)
       orders.sort((a, b) {
         final aTime = a.createdAt ?? DateTime(0);
@@ -85,9 +109,12 @@ class OrderRemoteDataSource {
   Future<void> cancelOrder(String orderId, {String? reason}) async {
     final docRef = _ordersRef.doc(orderId);
     final doc = await docRef.get();
-    if (!doc.exists) return;
+    if (!doc.exists || doc.data() == null) return;
 
     final existingOrder = OrderModel.fromFirestore(doc.data()!, doc.id);
+    // Nếu đơn hàng không còn ở trạng thái pending thì không xử lý hủy nữa
+    if (existingOrder.status != 'pending') return;
+
     final updatedTimeline = List<OrderEventModel>.from(existingOrder.timeline)
       ..add(
         OrderEventModel(
